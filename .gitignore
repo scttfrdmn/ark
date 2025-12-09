@@ -1,0 +1,24 @@
+bin/
+dist/
+coverage.out
+*.exe
+*.test
+.DS_Store
+*.log
+
+# Web
+web/node_modules/
+web/dist/
+web/.vite/
+web/coverage/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Environment
+.env
+.env.local

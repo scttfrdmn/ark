@@ -1,0 +1,19 @@
+linters:
+  enable:
+    - gofmt
+    - govet
+    - errcheck
+    - staticcheck
+    - unused
+    - gosimple
+    - ineffassign
+    - gosec
+    - bodyclose
+    - unconvert
+    - misspell
+run:
+  timeout: 5m
+  skip-dirs:
+    - web
+issues:
+  exclude-use-default: false
