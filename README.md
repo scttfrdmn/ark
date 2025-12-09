@@ -1,16 +1,26 @@
-# Ark: AWS Research Kit for UCLA
+# Ark: AWS Research Kit
 ### Integrated Cloud Security Training & Tooling for Academic Research
+
+**Open Source** | Apache 2.0 License | Institutional-Agnostic Framework
 
 **⚠️ PROTOTYPE/WORK IN PROGRESS** - This document outlines a proposed solution. Feedback welcome!
 
 ---
 
+## Overview
+
+**Ark** is an open-source framework that provides research institutions with integrated AWS training and security tooling. It combines progressive, just-in-time training with production-grade security guardrails, ensuring researchers can use AWS safely and compliantly from day one.
+
+**Key Innovation**: Training-as-tool - security education is embedded directly into the workflow, not delivered separately.
+
+---
+
 ## The Problem
 
-UCLA researchers need AWS access for computationally intensive research, but face critical challenges:
+Research institutions face critical challenges when enabling AWS access for their researchers:
 
 - **Security incidents**: Exposed credentials, misconfigured S3 buckets, unencrypted sensitive data
-- **Compliance gaps**: HIPAA, CUI, FERPA, and UC data classification (P1-P4) violations
+- **Compliance gaps**: HIPAA, CUI, FERPA, and institutional data classification violations
 - **Cost overruns**: Forgotten instances, orphaned resources, lack of budget controls
 - **Training disconnect**: Generic AWS training doesn't translate to research workflows
 - **Support burden**: Repetitive questions, preventable mistakes, reactive firefighting
@@ -21,21 +31,73 @@ UCLA researchers need AWS access for computationally intensive research, but fac
 
 ## The Solution: Training-as-Tool
 
-**Ark** is a unified command-line tool that simultaneously trains researchers and provides production security tooling.
+**Ark** provides both a command-line interface (CLI) and web interface that simultaneously train researchers and provide production security tooling. Institutions can customize branding, policies, and training content to match their specific requirements.
 
-### How It Works: First-Time User Experience
+### Dual Interface Approach
 
-**Scenario**: A new researcher receives notification that their UCLA AWS account is ready.
+**CLI** - For technical users and automation:
+- Command-line tool for scriptable, repeatable workflows
+- Rich terminal UI for interactive training
+- Ideal for power users, reproducible research, CI/CD integration
 
-**Prerequisites**: 
+**Web Interface** - For visual learners and administrators:
+- Browser-based application using AWS Cloudscape design system
+- Streamlined, curated AWS console experience
+- Interactive training with visual examples and simulations
+- Administrative dashboards for institutional oversight
+
+Both interfaces share the same backend, ensuring consistent training gates, security policies, and audit trails.
+
+### Architecture Overview
+
+Ark consists of three components:
+
+```
+┌─────────────┐          ┌──────────────┐         ┌─────────────────┐
+│   CLI Tool  │          │  Web App     │         │ Institutional   │
+│             │          │  (Browser)   │         │ Backend         │
+│  (Go CLI)   │          │ (Vue/Cloud-  │         │ (Go API)        │
+│             │          │  scape)      │         │                 │
+└──────┬──────┘          └──────┬───────┘         └────────┬────────┘
+       │                        │                          │
+       └─────────┬──────────────┘                          │
+                 │                                         │
+          ┌──────▼──────┐                                 │
+          │ Local Agent │◄────────────────────────────────┘
+          │ (Go proxy)  │  Training state, policy checks
+          │ localhost   │  Audit logging
+          └──────┬──────┘
+                 │
+                 │ AWS credentials (never leave machine)
+                 │
+          ┌──────▼──────┐
+          │  AWS APIs   │
+          └─────────────┘
+```
+
+**Local Agent**: Runs on user's machine, manages AWS credentials securely, enforces policies, caches training content for offline use
+
+**Institutional Backend**: Centralized API for training progress, policy definitions, audit logging, compliance reporting, user provisioning
+
+**CLI & Web**: User interfaces that communicate through the local agent, ensuring consistent experience and security
+
+---
+
+## How It Works: First-Time User Experience
+
+**Scenario**: A new researcher receives notification that their institutional AWS account is ready.
+
+**Example**: We'll use "{INSTITUTION}" as a placeholder - institutions customize this during deployment.
+
+**Prerequisites**:
 - macOS, Linux, or Windows computer
 - Internet connection for initial setup
 - AWS CLI v2.15+ (Ark will help install if missing)
 
-#### Step 1: Installation (2 minutes)
+### Step 1: Installation (2 minutes)
 
 ```bash
-$ curl -sSL https://ark.ucla.edu/install.sh | bash
+$ curl -sSL https://ark.{INSTITUTION}.edu/install.sh | bash
 
 ╔══════════════════════════════════════════════════════════════╗
 ║  🚀 Installing Ark - AWS Research Kit                        ║
@@ -43,87 +105,102 @@ $ curl -sSL https://ark.ucla.edu/install.sh | bash
 
 → Detecting system... macOS (arm64)
 → Downloading ark v1.2.0... ✓
-→ Installing to /usr/local/bin/ark... ✓
+→ Installing ark CLI to /usr/local/bin/ark... ✓
+→ Installing ark-agent service... ✓
+→ Starting ark-agent on localhost:8737... ✓
 
 ✅ Ark installed successfully!
 
-Next: ark init --institution ucla
+Both CLI and web interface are now available:
+  • CLI: ark --help
+  • Web: https://ark.{INSTITUTION}.edu
+
+Next: ark init --institution {INSTITUTION}
 ```
 
-#### Step 2: Configuration (5 minutes)
+The installation sets up both the CLI tool and the local agent service. The web interface is accessed through your browser and requires no additional installation.
 
+### Step 2: Configuration (5 minutes)
+
+**Via CLI:**
 ```bash
-$ ark init --institution ucla
+$ ark init --institution {INSTITUTION}
 
 ╔══════════════════════════════════════════════════════════════╗
-║  🎓 UCLA AWS Research Tool Setup                             ║
+║  🎓 {INSTITUTION} AWS Research Tool Setup                    ║
 ╚══════════════════════════════════════════════════════════════╝
 
-→ Loading UCLA configuration...
-  ✓ Configuration loaded
+→ Loading {INSTITUTION} configuration...
+  ✓ Configuration loaded from https://ark.{INSTITUTION}.edu/config
 
 → Required training modules:
   1. AWS Basics for Researchers (35 min)
   2. IAM & Identity Management (25 min)
-  3. UC Data Classification (P1-P4) (25 min)
+  3. Institutional Data Classification (25 min)
   4. S3 Storage Security (35 min)
-  
+
   📚 Total: ~120 minutes (can pause and resume)
 
 → Downloading training content... ✓
+  (Available offline after download)
 
-Next: ark setup wizard
+✅ Setup complete!
+
+Next steps:
+  • CLI: ark login
+  • Web: Visit https://ark.{INSTITUTION}.edu
 ```
 
-#### Step 3: AWS Authentication (3 minutes)
+**Or via Web:**
+*[Placeholder: Screenshot would show web interface with setup wizard, {INSTITUTION} branding, and progress indicators using Cloudscape design components]*
+
+The web interface provides the same configuration experience with a visual wizard, progress indicators, and institutional branding.
+
+### Step 3: Authentication (3 minutes)
+
+**Single Sign-On for Both Interfaces:**
 
 ```bash
-$ ark setup wizard
+$ ark login
 
 ╔══════════════════════════════════════════════════════════════╗
-║  🔐 AWS Authentication Setup                                 ║
+║  🔐 Authentication                                           ║
 ╚══════════════════════════════════════════════════════════════╝
 
-Let's connect you to UCLA's AWS environment.
-
-→ Checking AWS CLI... ✓ AWS CLI v2.15.2 detected
-
-📖 You'll log in with your UCLA credentials + DUO (two-factor authentication).
-   Uses SSO (Single Sign-On) - no API keys to manage. More secure!
-
-Ready? [Y/n]: y
-
-→ Executing: aws login
-
 Opening browser for authentication...
-[Browser opens for UCLA SSO login with DUO]
+→ https://ark.{INSTITUTION}.edu/auth/login
+
+[Browser opens for institutional SSO + MFA]
 
 ✅ Authentication successful!
 
-Account: 123456789012 (UCLA Research)
-User: sarah.chen@ucla.edu
+Account: 123456789012 ({INSTITUTION} Research)
+User: researcher@{INSTITUTION}.edu
+
+Credentials valid for both:
+  • CLI (ark commands)
+  • Web (https://ark.{INSTITUTION}.edu)
 
 Would you like to start training now? [Y/n]: y
 ```
 
-#### Step 4: Training-as-You-Go
+**Key Feature**: Login once, works everywhere. After CLI login, visiting the web interface shows you're already authenticated. The local agent manages secure token storage and refresh.
+
+### Step 4: Progressive Training
 
 Ark uses **progressive training** - you only complete modules when you need them for specific operations.
 
-Basic AWS commands trigger Module 1, but creating storage buckets requires understanding data classification (Module 3) and storage security (Module 4) first. Module 2 (IAM) becomes required when managing users and permissions.
+**Example: Researcher wants to create an S3 bucket**
 
-After basic setup, when the researcher tries to create a storage bucket:
-
+**Via CLI:**
 ```bash
-# Example: Trying to create a bucket for internal research data
-# (Note: P2 = "Internal" classification - you'll learn this in Module 3)
 $ ark bucket create --name my-research-data --classification P2
 
 ╔═══════════════════════════════════════════════════════════╗
 ║  🎓 Training Required                                     ║
 ╠═══════════════════════════════════════════════════════════╣
 ║  Before creating buckets, complete:                       ║
-║    • Module 3: UC Data Classification (25 min)           ║
+║    • Module 3: Data Classification (25 min)              ║
 ║    • Module 4: S3 Storage Security (35 min)              ║
 ║                                                           ║
 ║  You'll learn this command while completing training!     ║
@@ -132,6 +209,11 @@ $ ark bucket create --name my-research-data --classification P2
 Start Module 3 now? [Y/n]: y
 ```
 
+**Via Web:**
+*[Placeholder: Screenshot would show a modal dialog with Cloudscape Alert component explaining training requirement, progress bars showing 2/4 modules complete, and a "Start Training" button. The create bucket form would be visible but disabled in the background.]*
+
+The web interface presents the same training gate with visual progress indicators, but in a graphical modal dialog using Cloudscape design components.
+
 **After training**, the command executes with built-in security controls:
 - ✓ Encryption at rest (AES-256)
 - ✓ Encryption in transit (TLS 1.3)
@@ -139,9 +221,31 @@ Start Module 3 now? [Y/n]: y
 - ✓ Block all public access
 - ✓ Cost monitoring enabled
 
-**Key insight**: Training isn't a separate hurdle - it's embedded in the workflow. Researchers learn by doing, using the actual production tool.
+### Training Content Delivery
 
-**📖 Complete Journey**: See Appendix A for a detailed day-in-the-life walkthrough following Dr. Sarah Chen from installation through productive AWS usage (includes all training modules totaling ~2 hours, real commands, troubleshooting, and week 2 self-sufficiency). See Appendix B for module template structure and customization options.
+**CLI Training Experience:**
+- Rich terminal UI with interactive elements
+- Text-based quizzes with immediate feedback
+- Code examples and command demonstrations
+- Progress saved automatically
+- Works offline (cached content)
+
+**Web Training Experience:**
+*[Placeholder: Screenshot series would show:
+1. Training module layout with Cloudscape Container components, navigation sidebar showing progress
+2. Interactive quiz with visual question formats (multiple choice with radio buttons, drag-and-drop classification exercises)
+3. Visual diagrams explaining S3 bucket structure, data flows
+4. Video embedding for complex topics
+5. Certificate download page with PDF preview]*
+
+The web interface offers enhanced interactivity:
+- Embedded videos and animations
+- Interactive simulations (sandbox environments)
+- Visual quiz formats (drag-and-drop, image selection)
+- Progress dashboards with charts
+- Social features (see peer progress, anonymized)
+
+**Both interfaces track progress to the same institutional backend**, so you can start training in the CLI and continue in the web browser, or vice versa.
 
 ---
 
@@ -149,15 +253,17 @@ Start Module 3 now? [Y/n]: y
 
 ### 🎓 **Progressive Training**
 - Just-in-time learning when attempting new operations
-- Interactive tutorials embedded in actual commands
+- Interactive tutorials embedded in actual commands/workflows
 - Quiz checkpoints ensure comprehension
-- Completion tracking and certification generation (PDF certificates with cryptographic proof, recognized by institutional compliance offices for audit purposes)
+- Completion tracking and certificate generation (cryptographically signed PDFs)
+- Cross-interface sync (start CLI, finish web, or vice versa)
 
 ### 🔒 **Built-in Compliance**
-- UC P1-P4 data classification validation
+- Institutional data classification validation (customizable taxonomy)
 - HIPAA, CUI, FERPA requirement enforcement
 - Pre-approved policy templates
 - Automatic security best practices
+- Cannot disable critical security controls
 
 ### 🛡️ **Bulletproof Operations**
 - Automatic retry with exponential backoff
@@ -170,74 +276,198 @@ Start Module 3 now? [Y/n]: y
 - Auto-shutdown for compute instances
 - Orphaned resource detection
 - Budget enforcement hooks
+- Real-time cost visualization (web interface)
 
 ### 📊 **Institutional Oversight**
 - Centralized completion tracking
-- Security posture dashboards
+- Security posture dashboards (web-based)
 - Audit trail integration with CloudTrail
 - Customizable training content per department
+- Role-based access (researcher, PI, admin, CISO views)
+
+### 🌐 **Dual Interface Choice**
+- **CLI**: Scriptable, automatable, efficient for power users
+- **Web**: Visual, interactive, accessible, great for learning
+- **Unified**: Same training, same policies, same audit trail
+- **User preference**: Choose the interface that fits your workflow
+
+---
+
+## Open Source & Institutional Flexibility
+
+### Licensing
+- **Apache 2.0 License**: Free to use, modify, and distribute
+- **Open Core**: All components are open source
+- **Community-driven**: Contributions welcome via GitHub
+
+### Institutional Customization
+
+Institutions can customize Ark to their specific needs:
+
+**Branding:**
+- Logo, colors, institution name throughout UI
+- Custom domain (ark.{your-institution}.edu)
+- Configurable terminology (adapt to local naming conventions)
+
+**Policy Framework:**
+- Define your own data classification system (or use templates)
+- Map to regulatory frameworks (HIPAA, FISMA, etc.)
+- Set budget limits and approval workflows
+- Customize security baselines
+
+**Training Content:**
+- Modify existing modules to match institutional policies
+- Add institution-specific case studies
+- Create domain-specific modules (genomics, HPC, etc.)
+- Multiple language support
+
+**Integration:**
+- SSO with any SAML/OIDC identity provider
+- LDAP/Active Directory sync
+- SCIM provisioning
+- SIEM integration (Splunk, ELK, AWS Security Hub)
+- Ticketing systems (ServiceNow, Jira)
+
+**Example Configuration:**
+```yaml
+# ark-config.yaml
+institution:
+  name: "University of Research"
+  short_name: "UResearch"
+  domain: "ark.uresearch.edu"
+
+branding:
+  logo: "https://cdn.uresearch.edu/logo.png"
+  primary_color: "#003366"
+
+data_classification:
+  framework: "custom"  # or "nist", "iso27001", "uc-p1-p4"
+  levels:
+    - id: "public"
+      name: "Public"
+      encryption_required: false
+    - id: "internal"
+      name: "Internal"
+      encryption_required: true
+    - id: "confidential"
+      name: "Confidential"
+      encryption_required: true
+      mfa_required: true
+    - id: "restricted"
+      name: "Restricted"
+      encryption_required: true
+      mfa_required: true
+      approval_required: true
+
+training:
+  modules:
+    - id: "aws-basics"
+      required: true
+      duration_minutes: 35
+      content_url: "https://content.uresearch.edu/modules/aws-basics.md"
+    # ... additional modules
+
+identity:
+  sso_provider: "saml"
+  idp_url: "https://sso.uresearch.edu"
+  attributes:
+    uid: "eduPersonPrincipalName"
+    email: "mail"
+    department: "ou"
+```
 
 ---
 
 ## Implementation Approach
 
-### Phase 1: Core Tool (Months 1-2)
-- IAM user/group management with MFA enforcement
-- S3 bucket creation with classification-based security
-- EC2 instance lifecycle management
-- Cost monitoring and alerting
+### Phase 1: Core Foundation (Months 1-2)
+- Local agent (Go) with AWS credential management
+- Institutional backend API (Go) with REST + GraphQL
+- CLI tool (Go, Cobra) with basic commands
+- Web application (Vue 3, Cloudscape, TypeScript)
+- Authentication (SSO integration)
 
 ### Phase 2: Training Integration (Months 2-3)
-- 4 required modules (AWS basics, IAM, data classification, S3 security)
-- Interactive checkpoints and quizzes
-- Completion verification system
-- Certificate generation
+- 4 core training modules (customizable templates)
+- Interactive checkpoints and quizzes (CLI + Web)
+- Training gate enforcement in agent
+- Certificate generation with cryptographic proof
+- Progress sync across interfaces
 
 ### Phase 3: Institutional Deployment (Month 4)
-- UCLA-specific configuration (SSO, policies, support contacts)
+- Institution-specific configuration system
 - Integration with existing identity management
-- Training content customization for departments
-- Admin dashboards and reporting
+- Training content customization tools
+- Admin dashboards and reporting (web-based)
+- SIEM integration
+
+**For detailed implementation timeline, see [ROADMAP.md](ROADMAP.md)**
+
+---
+
+## Technology Stack
+
+**Backend:**
+- Language: Go (single binary, cross-platform, fast)
+- AWS SDK: Official AWS SDK v2 for Go
+- Database: DynamoDB (progress, audit), S3 (content, logs)
+- API: REST + GraphQL (for web subscriptions)
+
+**Local Agent:**
+- Language: Go
+- Server: HTTP proxy on localhost:8737
+- Storage: SQLite (local cache), secure keychain (credentials)
+
+**CLI:**
+- Language: Go
+- Framework: Cobra (commands), bubbletea (interactive UI)
+- Distribution: GitHub releases, package managers (brew, apt, chocolatey)
+
+**Web Application:**
+- Framework: Vue 3 with TypeScript
+- Design System: AWS Cloudscape (consistent with AWS console)
+- Build: Vite
+- State: Pinia
+- Testing: Playwright (E2E), Vitest (unit)
+
+**Authentication:**
+- SSO: SAML 2.0, OAuth 2.0/OIDC
+- Tokens: JWT (access + refresh)
+- MFA: Institutional (DUO, etc.)
 
 ---
 
 ## Benefits
 
 ### For Researchers
-✓ **One tool to learn** - Training and production tooling unified  
-✓ **Faster onboarding** - 2 hours to full AWS competency (vs weeks with traditional training)  
-✓ **Confidence** - Can't make critical security mistakes (built-in guardrails)  
-✓ **Self-service** - Standard operations (buckets, instances, databases) don't require approval
-   (Note: P4 data and specialized resources still require institutional review)
+✓ **One tool to learn** - Training and production tooling unified
+✓ **Interface choice** - Use CLI or web based on preference
+✓ **Faster onboarding** - 2 hours to full AWS competency
+✓ **Confidence** - Can't make critical security mistakes
+✓ **Self-service** - Standard operations don't require approval
+✓ **Works offline** - Training content cached locally
 
 ### For IT Security
-✓ **Enforced compliance** - Can't skip security controls  
-✓ **Reduced incidents** - Built-in guardrails prevent common mistakes (target: 80% reduction)  
-✓ **Audit trails** - Complete logging of training and operations  
+✓ **Enforced compliance** - Can't skip security controls
+✓ **Reduced incidents** - Built-in guardrails prevent common mistakes (target: 80% reduction)
+✓ **Audit trails** - Complete logging of training and operations
 ✓ **Scalable** - Minimal support burden as researchers self-serve
+✓ **Visibility** - Web dashboards for institutional oversight
 
-### For UCLA
-✓ **Risk reduction** - Systematic security control enforcement  
-✓ **Cost control** - Automated budget monitoring and alerting (reduce unexpected costs by 90%, save ~$200k/year in support)  
-✓ **Compliance** - Demonstrable training and audit trails for regulators  
-✓ **Competitive advantage** - Enables cutting-edge research safely
-
----
-
-## Technology
-
-- **Language**: Go (single binary, cross-platform, fast)
-- **AWS SDK**: Official AWS SDK v2 for Go
-- **Distribution**: GitHub releases, institutional package repos
-- **Configuration**: YAML-based, remotely updatable training content
-- **Authentication**: AWS SSO with new `aws login` command support
+### For Institutions
+✓ **Risk reduction** - Systematic security control enforcement
+✓ **Cost control** - Automated budget monitoring (reduce surprises by 90%)
+✓ **Compliance** - Demonstrable training and audit trails for regulators
+✓ **Customizable** - Adapt to institutional policies and branding
+✓ **Open source** - No vendor lock-in, community-driven improvements
+✓ **Multi-interface** - Supports diverse user preferences and accessibility needs
 
 ---
 
 ## Success Metrics
 
-**Measurement Period**: Evaluated at 6 and 12 months post-deployment  
-**Baseline**: 6 months prior to Ark deployment  
+**Measurement Period**: Evaluated at 6 and 12 months post-deployment
+**Baseline**: 6 months prior to Ark deployment
 **Reporting**: Ongoing dashboard with quarterly reviews
 
 - **Training completion rate**: Target 95% within 30 days of AWS access
@@ -245,28 +475,63 @@ Start Module 3 now? [Y/n]: y
 - **Cost incidents**: Reduce surprise bills >$1000 by 90%
 - **Support tickets**: Reduce AWS-related tickets by 60%
 - **Time to productivity**: <2 hours from account creation to first resource deployed
+- **User satisfaction**: >4.0/5.0 for both CLI and web interfaces
+- **Accessibility**: WCAG 2.1 AA compliance for web interface
 
 ---
 
-## Next Steps
+## Getting Started
 
-1. **Pilot program** with 2-3 research labs (Month 1)
-   - Owner: IT Security Team with Solutions Architecture support
-   - Target: 50-100 users
-2. **Refinement** based on researcher feedback (Month 2)
-   - Owner: Product team + CISO Office
-3. **Broader rollout** to departments with AWS needs (Month 3-4)
-   - Owner: IT Leadership
-4. **Mandatory requirement** for new AWS account requests (Month 5+)
-   - Owner: Institutional Policy
+### For Institutions
+1. **Review documentation**: Understand architecture and requirements
+2. **Customize configuration**: Define data classifications, branding, policies
+3. **Deploy backend**: Set up institutional backend API and database
+4. **Integrate identity**: Connect to SSO provider (SAML/OIDC)
+5. **Customize training**: Adapt modules to institutional policies
+6. **Pilot program**: Start with 50-100 users in 2-3 research labs
+7. **Iterate**: Gather feedback and refine
+8. **Broad rollout**: Deploy institution-wide
+
+### For Researchers
+1. **Install Ark**: Follow institutional installation guide
+2. **Authenticate**: Login with institutional credentials
+3. **Complete training**: ~2 hours of progressive, interactive training
+4. **Start using AWS**: Create resources with built-in security
+5. **Choose your interface**: Use CLI for scripts, web for exploration
+
+### For Developers
+1. **Clone repository**: `git clone https://github.com/aws-research-kit/ark`
+2. **Read CONTRIBUTING.md**: Guidelines for contributions
+3. **Set up dev environment**: Follow setup instructions
+4. **Pick an issue**: Check GitHub issues for good first contributions
+5. **Submit PR**: Follow contribution guidelines
 
 ---
 
-## Appendix A: First-Time User Walkthrough
+## Community & Support
+
+- **GitHub**: [github.com/aws-research-kit/ark](https://github.com/aws-research-kit/ark)
+- **Documentation**: [docs.ark-aws.org](https://docs.ark-aws.org)
+- **Community Forum**: [community.ark-aws.org](https://community.ark-aws.org)
+- **Slack**: [ark-aws.slack.com](https://ark-aws.slack.com)
+
+**Institutional Support**: Each institution provides first-line support for their users. Community provides shared knowledge base and collaboration.
+
+---
+
+## License
+
+Apache License 2.0 - See [LICENSE](LICENSE) file for details.
+
+Copyright © 2025 Ark Contributors
+
+---
+
+## Appendix A: Detailed User Walkthrough
 
 ### Scenario: Dr. Sarah Chen, Postdoc in Computational Biology
 
-**Background**: Sarah needs to analyze 500GB of genomic data. She's comfortable with Python and the command line but has never used AWS. Her PI just got her an AWS account through UCLA.
+**Background**: Sarah needs to analyze 500GB of genomic data. She's comfortable with Python and the command line but has never used AWS. Her PI just got her an AWS account through her institution.
 
 ---
 
@@ -274,11 +539,13 @@ Start Module 3 now? [Y/n]: y
 
 Sarah receives an email from IT:
 
-> Your UCLA AWS account is ready!  
-> Install Ark to get started: https://ark.ucla.edu/install
+> Your institutional AWS account is ready!
+> Install Ark to get started: https://ark.{INSTITUTION}.edu/install
+
+**Sarah chooses CLI (she's comfortable with terminal):**
 
 ```bash
-$ curl -sSL https://ark.ucla.edu/install.sh | bash
+$ curl -sSL https://ark.{INSTITUTION}.edu/install.sh | bash
 
 ╔══════════════════════════════════════════════════════════════╗
 ║  🚀 Installing Ark - AWS Research Kit                        ║
@@ -289,16 +556,18 @@ $ curl -sSL https://ark.ucla.edu/install.sh | bash
   Installing AWS CLI v2.15.2... ✓
 → Downloading ark v1.2.0... ✓
 → Installing to /usr/local/bin/ark... ✓
+→ Installing ark-agent service... ✓
+→ Starting ark-agent... ✓
 → Verifying installation... ✓
 
 ✅ Ark installed successfully!
 
 Next steps:
-  1. Run: ark init --institution ucla
-  2. Complete setup: ark setup wizard
+  1. Run: ark init --institution {INSTITUTION}
+  2. Complete setup: ark login
   3. Start training: ark learn start
 
-Need help? Visit https://ark.ucla.edu/docs
+Need help? Visit https://ark.{INSTITUTION}.edu/docs
 ```
 
 ---
@@ -306,26 +575,26 @@ Need help? Visit https://ark.ucla.edu/docs
 ### 9:02 AM - Initial Configuration
 
 ```bash
-$ ark init --institution ucla
+$ ark init --institution {INSTITUTION}
 
 ╔══════════════════════════════════════════════════════════════╗
-║  🎓 UCLA AWS Research Tool Setup                             ║
+║  🎓 {INSTITUTION} AWS Research Tool Setup                    ║
 ╚══════════════════════════════════════════════════════════════╝
 
-→ Loading UCLA configuration...
-  📥 Downloading from: https://ucla-aws-training.s3.amazonaws.com/config/ucla.yaml
+→ Loading {INSTITUTION} configuration...
+  📥 Downloading from: https://ark.{INSTITUTION}.edu/config
   ✓ Configuration loaded
 
-Institution: UCLA
-Support Email: your institutional AWS support
-Documentation: https://it.ucla.edu/aws
+Institution: {INSTITUTION}
+Support Email: aws-support@{INSTITUTION}.edu
+Documentation: https://it.{INSTITUTION}.edu/aws
 
 → Required training modules:
   1. AWS Basics for Researchers (35 min)
   2. IAM & Identity Management (25 min)
-  3. UC Data Classification (P1-P4) (25 min)
+  3. Data Classification (25 min)
   4. S3 Storage Security (35 min)
-  
+
   📚 Total estimated time: 120 minutes
   💡 You can pause and resume anytime!
 
@@ -339,41 +608,24 @@ Documentation: https://it.ucla.edu/aws
 
 Your Progress: ░░░░░░░░░░ 0/4 modules (0%)
 
-Next: ark setup wizard
+Next: ark login
 ```
 
 ---
 
-### 9:05 AM - AWS Authentication Setup
+### 9:05 AM - Authentication
 
 ```bash
-$ ark setup wizard
+$ ark login
 
 ╔══════════════════════════════════════════════════════════════╗
-║  🔐 AWS Authentication Setup                                 ║
+║  🔐 Authentication                                           ║
 ╚══════════════════════════════════════════════════════════════╝
 
-Let's connect you to UCLA's AWS environment.
+Opening browser for authentication...
+  🌐 https://ark.{INSTITUTION}.edu/auth/login
 
-→ Checking AWS CLI installation...
-  ✓ AWS CLI v2.15.2 detected
-  ✓ Supports new 'aws login' command
-
-📖 About AWS Single Sign-On (SSO)
-   You'll log in with your UCLA credentials + DUO (two-factor authentication).
-   No API keys to manage - more secure and simpler!
-   
-   The new 'aws login' command (AWS CLI v2.15+) simplifies
-   authentication compared to the older 'aws sso login' method.
-
-Ready to authenticate? [Y/n]: y
-
-→ Executing: aws login
-
-Opening your browser to authenticate...
-  🌐 https://ucla.awsapps.com/start
-
-[Browser opens, Sarah logs in with UCLA credentials and DUO]
+[Browser opens, Sarah logs in with institutional credentials and MFA]
 [After successful login, browser shows: "You may now close this window"]
 
 → Waiting for authentication... ✓
@@ -381,8 +633,8 @@ Opening your browser to authenticate...
 ✅ Authentication successful!
 
 → Verifying credentials...
-  Account: 123456789012 (UCLA Research)
-  User: AIDAI...XYZ (sarah.chen@ucla.edu)
+  Account: 123456789012 ({INSTITUTION} Research)
+  User: AIDAI...XYZ (sarah.chen@{INSTITUTION}.edu)
   ✓ Credentials verified
 
 → Checking your permissions...
@@ -391,10 +643,12 @@ Opening your browser to authenticate...
   ✓ IAM access: Limited (read-only)
   ✓ Cost Explorer: View own usage
 
-💡 Your permissions follow the "UCLA Researcher" policy.
-   This gives you access to core services while maintaining security.
+💡 Your permissions follow the "{INSTITUTION} Researcher" policy.
 
 ✅ All systems ready!
+
+💡 Web interface also ready: https://ark.{INSTITUTION}.edu
+   (You're already logged in)
 
 Would you like to start training now? [Y/n]: y
 ```
@@ -414,7 +668,7 @@ Welcome, Sarah! 👋
 This module covers:
   • What is AWS and why researchers use it
   • Key services: S3 (storage), EC2 (computing), IAM (security)
-  • UCLA's AWS setup and support resources
+  • {INSTITUTION}'s AWS setup and support resources
   • How costs work and how to avoid surprises
   • **CRITICAL: Common security threats and how to prevent them**
 
@@ -434,293 +688,18 @@ Why researchers love AWS:
   ✓ Collaborate by sharing data securely
   ✓ 99.99% uptime - more reliable than local servers
 
-Real UCLA example:
-  Dr. Martinez (Neuroscience) analyzed 10TB of fMRI data using 
-  100 EC2 instances for 8 hours. Cost: $240. 
-  
+Real example from {INSTITUTION}:
+  Dr. Martinez (Neuroscience) analyzed 10TB of fMRI data using
+  100 EC2 instances for 8 hours. Cost: $240.
+
   Buying equivalent hardware: ~$50,000 + maintenance.
 
 Press ENTER to continue...
+```
 
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+[Training continues through all sections, including security fundamentals, interactive quizzes, and hands-on exercises]
 
-Section 1.2: Security First - Why This Matters
-
-🚨 REAL INCIDENTS FROM ACADEMIC INSTITUTIONS (2023-2024):
-
-❌ Incident 1: Public S3 Bucket
-   University: Major Research Institution (anonymized)
-   What happened: Researcher made bucket public to "share with collaborator"
-   Result: 2TB of patient genomic data exposed for 6 months
-   Impact: $4.2M HIPAA fine, IRB suspension, lawsuits
-   
-   Prevention: Ark BLOCKS public access by default for sensitive data
-
-❌ Incident 2: Exposed AWS Keys in GitHub
-   University: West Coast R1 Institution
-   What happened: Student committed AWS keys to public GitHub repo
-   Result: Cryptominers used account, $62,000 bill in 3 days
-   Impact: Lab funding exhausted, student's PhD delayed
-   
-   Prevention: Ark uses SSO - no long-term keys to expose
-
-❌ Incident 3: Forgotten EC2 Instance
-   University: Midwest Research Lab
-   What happened: Postdoc left institution, instance kept running
-   Result: $18,000 over 14 months, GPUs sitting idle
-   Impact: PI had to return grant funds to cover costs
-   
-   Prevention: Ark requires auto-shutdown configuration
-
-⚠️  These aren't rare - they happen weekly across academia.
-
-🛡️  YOUR RESPONSIBILITY:
-   As a researcher with AWS access, you are:
-   • A steward of sensitive research data
-   • A guardian of lab/grant funding
-   • A representative of UCLA's security posture
-   
-   This training ensures you don't become a cautionary tale.
-
-Press ENTER to continue...
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Section 1.3: The Shared Responsibility Model
-
-┌─────────────────────────────────────────────────┐
-│           AWS Responsibility                    │
-│  (Security OF the cloud)                        │
-│                                                 │
-│  • Physical data centers                        │
-│  • Hardware infrastructure                      │
-│  • Network infrastructure                       │
-│  • Virtualization layer                         │
-└─────────────────────────────────────────────────┘
-                       ↓
-┌─────────────────────────────────────────────────┐
-│          YOUR Responsibility                    │
-│  (Security IN the cloud)                        │
-│                                                 │
-│  • Data encryption ← YOU must enable            │
-│  • Access controls ← YOU must configure         │
-│  • Credential management ← YOU must protect     │
-│  • Network configuration ← YOU must secure      │
-│  • Cost management ← YOU must monitor           │
-└─────────────────────────────────────────────────┘
-
-Think of it like a safe deposit box:
-  • Bank secures the building (AWS's job)
-  • You must lock your box and guard your key (YOUR job)
-
-Ark helps you fulfill YOUR responsibilities correctly.
-
-Press ENTER to continue...
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Section 1.4: Core AWS Services
-
-Think of AWS services as tools in a toolkit:
-
-🗄️  S3 (Simple Storage Service)
-   Like Dropbox, but for research data.
-   • Store files from bytes to terabytes
-   • Automatic redundancy (your data is safe)
-   • Access from anywhere
-   
-   Example: Store your genomic sequence files
-   
-   🚨 Security consideration:
-      Default S3 buckets are PRIVATE, but one wrong setting
-      makes them PUBLIC. Ark prevents this mistake.
-
-💻 EC2 (Elastic Compute Cloud)
-   Rent virtual computers by the hour.
-   • From small (2 CPUs) to huge (hundreds of CPUs)
-   • GPU instances for machine learning
-   • Run any software you need
-   
-   Example: Process 500GB of data in parallel
-   
-   🚨 Security consideration:
-      Forgotten instances = wasted money. Always set auto-shutdown.
-
-🔐 IAM (Identity & Access Management)
-   Control who can access what.
-   • Create users for lab members
-   • Set permissions carefully
-   • Enable multi-factor authentication
-   
-   Example: Give your student read-only access to data
-   
-   🚨 Security consideration:
-      Over-privileged users = biggest risk. Follow "least privilege."
-
-📊 CloudWatch
-   Monitor costs and usage.
-   • Set billing alarms
-   • Track resource usage
-   • Get alerts before overspending
-   
-   🚨 Security consideration:
-      You MUST set billing alarms - treat it like a fume hood alarm.
-
-Press ENTER to continue...
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Section 1.5: The 5 Golden Rules of AWS Security
-
-Remember these ALWAYS:
-
-1️⃣  NEVER share credentials
-   • Not with lab mates
-   • Not via email
-   • Not in Slack/Teams
-   • Not in code repositories
-   
-   If someone needs access → Create them an account
-
-2️⃣  ALWAYS enable MFA (multi-factor authentication)
-   • Prevents 99.9% of account compromises
-   • Takes 2 minutes to set up
-   • Required by UCLA policy
-   
-   Your password alone is NOT enough
-
-3️⃣  ENCRYPT everything sensitive
-   • P3/P4 data MUST be encrypted
-   • Encryption at rest + in transit
-   • Don't assume it's automatic
-   
-   Ark handles this for you when you classify correctly
-
-4️⃣  MONITOR your costs daily
-   • Set billing alarms FIRST
-   • Check costs at end of each day
-   • Investigate unusual spikes immediately
-   
-   Financial responsibility = security responsibility
-
-5️⃣  AUDIT regularly
-   • What resources are running?
-   • Who has access to what?
-   • Are security settings still correct?
-   
-   Use: ark audit scan (weekly recommended)
-
-These aren't suggestions - they're requirements.
-
-Press ENTER to continue...
-
-[Training continues through sections on costs, billing, support...]
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 Checkpoint Quiz
-
-Let's check your understanding!
-
-Q1: What's the main advantage of AWS for researchers?
-  a) It's free
-  b) Pay for what you use, scale as needed
-  c) Faster than local computers
-  d) Automatic data analysis
-
-Your answer: b
-
-✅ Correct! The elasticity and pay-as-you-go model means you can 
-   access massive compute resources without capital investment.
-
-Q2: Which service would you use to store 200GB of sequencing data?
-  a) EC2
-  b) IAM
-  c) S3
-  d) CloudWatch
-
-Your answer: c
-
-✅ Exactly! S3 is designed for data storage at any scale.
-
-Q3: What should you set up to avoid surprise AWS bills?
-  a) CloudWatch billing alarms
-  b) Nothing - AWS is always cheap
-  c) Automatic shutdowns only
-  d) IAM policies
-
-Your answer: a
-
-✅ Perfect! Always set billing alarms before using AWS.
-
-Q4: 🔒 SECURITY QUESTION: You need to share AWS access with a 
-    visiting collaborator. What should you do?
-
-  a) Share your username and password
-  b) Create them their own IAM user account
-  c) Give them your laptop
-  d) Email them your access keys
-
-Your answer: b
-
-✅ CORRECT! Never share credentials. Always create separate accounts.
-   This ensures:
-   • Accountability (know who did what)
-   • Revocable access (can remove when they leave)
-   • Audit trails (CloudTrail logs their actions)
-
-Q5: 🔒 SECURITY QUESTION: You find your AWS access key accidentally
-    committed to a public GitHub repo. What do you do?
-
-  a) Delete the GitHub commit and hope no one saw it
-  b) Immediately rotate the key and contact security
-  c) Wait and see if anything bad happens
-  d) Change your GitHub password
-
-Your answer: b
-
-✅ CRITICAL! Exposed keys = compromised account. Always:
-   1. Rotate keys immediately (Ark will help)
-   2. Contact your institutional AWS support
-   3. Check CloudTrail for unauthorized usage
-   4. Document the incident
-   
-   Keys can be scraped in minutes by bots.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎓 Hands-On Exercise: Set Up Your First Security Control
-
-Now let's actually set up a billing alarm!
-
-This is a real operation - we'll create an actual alarm on your account.
-
-Why this matters:
-  💰 Prevents cost overruns
-  🚨 Early warning system
-  📧 Alerts you before problems grow
-
-→ Creating billing alarm...
-  Name: sarah-chen-monthly-budget
-  Threshold: $100/month
-  Alert: sarah.chen@ucla.edu
-
-Execute this operation? [Y/n]: y
-
-→ Calling AWS CloudWatch API...
-  ✓ Alarm created
-
-→ Sending test notification...
-  ✓ Check your email for confirmation
-
-💡 You'll receive an email if spending exceeds $100/month.
-   Adjust anytime with: ark cost alert update
-   
-   🔒 Security tip: Set alarms at multiple thresholds:
-      • $50 - Advisory notice
-      • $100 - Warning
-      • $200 - Critical alert
-
+```bash
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ✅ Module 1 Complete!
@@ -747,31 +726,43 @@ Continue to Module 2: IAM & Identity Management? [Y/n]: n
 No problem! Resume anytime with: ark learn continue
 
 Your progress is saved automatically.
+💡 You can also continue training in the web interface:
+   https://ark.{INSTITUTION}.edu/training
 ```
 
 ---
 
-### 9:45 AM - Sarah Takes a Coffee Break
+### 9:45 AM - Sarah Takes a Break, Checks Web Interface
 
-She's learned the basics and completed the security foundations. Now she wants to actually upload her genomic data.
+*[Placeholder: Screenshot would show web dashboard with:
+- Progress ring chart showing 25% complete (1/4 modules)
+- Module 1 marked complete with green checkmark and certificate icon
+- Modules 2-4 shown as "Not Started" with locked icons
+- "Continue Training" button for Module 2
+- Sidebar showing her AWS resources (currently empty)
+- Cost widget showing $0.00 this month]*
+
+Sarah opens her browser to see what the web interface offers. She's logged in automatically (same session as CLI). The dashboard shows her training progress and will eventually show her AWS resources.
 
 ---
 
 ### 9:50 AM - Trying to Use S3 (Training Gate)
 
+Sarah decides to try creating a bucket for her genomic data:
+
 ```bash
-$ ark bucket create --name sarah-genomics-data --classification P2
+$ ark bucket create --name sarah-genomics-data --classification internal
 
 ╔══════════════════════════════════════════════════════════════╗
 ║  ⚠️  Training Required                                       ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Before creating S3 buckets, you must complete:             ║
 ║                                                              ║
-║  Module 3: UC Data Classification ................ ✗         ║
-║    (~15 min - learn P1-P4 levels)                            ║
+║  Module 3: Data Classification ................... ✗         ║
+║    (~25 min - learn sensitivity levels)                      ║
 ║                                                              ║
 ║  Module 4: S3 Storage Security ................... ✗         ║
-║    (~30 min - encryption, access control)                    ║
+║    (~35 min - encryption, access control)                    ║
 ║                                                              ║
 ║  Why? Creating buckets incorrectly is a top security risk.  ║
 ║  These modules ensure you protect your research data.        ║
@@ -780,432 +771,30 @@ $ ark bucket create --name sarah-genomics-data --classification P2
 Start Module 3 now? [Y/n]: y
 ```
 
----
-
-### 10:00 AM - Module 3: UC Data Classification
-
-```bash
-╔══════════════════════════════════════════════════════════════╗
-║  📚 Module 3: UC Data Classification (P1-P4)                 ║
-╚══════════════════════════════════════════════════════════════╝
-
-Understanding data sensitivity is CRITICAL for compliance and security.
-
-⚠️  Getting this wrong has serious consequences:
-   • Federal fines ($100k - $50M+ per incident)
-   • Loss of grant funding
-   • IRB suspension
-   • Legal liability
-   • Reputational damage to UCLA
-
-This module ensures you classify and protect data correctly.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-UC Protection Levels - The Framework:
-
-UCLA follows University of California data protection standards.
-Every piece of data falls into one of four categories:
-
-┌─────────────────────────────────────────────────────────────┐
-│ P1 - PUBLIC INFORMATION                                     │
-├─────────────────────────────────────────────────────────────┤
-│ What: Information intended for public distribution          │
-│                                                             │
-│ Examples:                                                   │
-│   ✓ Published research papers                              │
-│   ✓ Public course catalogs                                 │
-│   ✓ Campus directory information                           │
-│   ✓ Marketing materials                                    │
-│                                                             │
-│ Requirements: None (already public)                         │
-│ AWS: Standard S3, no special controls needed               │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ P2 - INTERNAL INFORMATION                                   │
-├─────────────────────────────────────────────────────────────┤
-│ What: Information for UCLA use only                         │
-│                                                             │
-│ Examples:                                                   │
-│   ✓ Unpublished research data (no PII)                     │
-│   ✓ Grant proposals (pre-submission)                       │
-│   ✓ Internal reports and memos                             │
-│   ✓ Non-sensitive lab data                                 │
-│                                                             │
-│ Requirements:                                               │
-│   • Access limited to UCLA affiliates                      │
-│   • Basic access controls                                  │
-│   • Encryption recommended but not required                │
-│                                                             │
-│ AWS: Private S3 bucket, encryption enabled                  │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ P3 - PROTECTED INFORMATION  ← MOST COMMON FOR RESEARCH      │
-├─────────────────────────────────────────────────────────────┤
-│ What: Sensitive data requiring protection                   │
-│                                                             │
-│ Examples:                                                   │
-│   ✓ Personal Identifiable Information (PII)                │
-│     - Names, addresses, phone numbers                      │
-│     - Email addresses, student IDs                         │
-│     - Birth dates, driver's license numbers                │
-│   ✓ Student records (FERPA protected)                      │
-│   ✓ De-identified health data (not full PHI)              │
-│   ✓ Research data with confidentiality agreements          │
-│   ✓ Export-controlled research data                        │
-│   ✓ Proprietary business information                       │
-│                                                             │
-│ Legal Frameworks:                                           │
-│   • FERPA (Family Educational Rights and Privacy Act)      │
-│   • PII protection laws (CCPA, GDPR if applicable)         │
-│   • Contractual confidentiality obligations                │
-│                                                             │
-│ Requirements:                                               │
-│   • ✓ Encryption at rest (REQUIRED)                        │
-│   • ✓ Encryption in transit (REQUIRED)                     │
-│   • ✓ Access logging for audits                            │
-│   • ✓ Strong access controls                               │
-│   • ✓ MFA for administrators                               │
-│   • ✓ Incident response plan                               │
-│   • ✓ Regular access reviews                               │
-│                                                             │
-│ AWS: Ark P3 configuration enforces ALL requirements         │
-│                                                             │
-│ 🚨 Common Mistake: "It's de-identified so it's fine"       │
-│    Even de-identified data can often be re-identified!     │
-│    When in doubt, treat as P3.                             │
-└─────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────┐
-│ P4 - HIGHLY RESTRICTED INFORMATION                          │
-├─────────────────────────────────────────────────────────────┤
-│ What: Extremely sensitive data with strict regulations      │
-│                                                             │
-│ Examples:                                                   │
-│   ✓ Protected Health Information (PHI) - HIPAA            │
-│   ✓ Social Security Numbers                               │
-│   ✓ Financial account numbers                             │
-│   ✓ Controlled Unclassified Information (CUI)             │
-│   ✓ ITAR/EAR controlled technical data                    │
-│   ✓ Credit card numbers (PCI DSS)                         │
-│                                                             │
-│ Legal Frameworks:                                           │
-│   • HIPAA (Health Insurance Portability Act)               │
-│   • NIST 800-171 (CUI protection)                          │
-│   • CMMC (DoD cybersecurity)                               │
-│   • ITAR (International Traffic in Arms)                   │
-│   • PCI DSS (Payment Card Industry)                        │
-│                                                             │
-│ Requirements:                                               │
-│   • ✓ All P3 requirements PLUS:                            │
-│   • ✓ Pre-approved AWS account configuration               │
-│   • ✓ Business Associate Agreement (BAA) for HIPAA        │
-│   • ✓ Enhanced monitoring and alerting                     │
-│   • ✓ Dedicated security review                            │
-│   • ✓ Compliance officer approval                          │
-│   • ✓ Annual audits                                        │
-│   • ✓ Incident notification within 24-72 hours            │
-│                                                             │
-│ AWS: Requires CISO office approval BEFORE use               │
-│      Contact: your institutional HIPAA compliance office                     │
-│                                                             │
-│ ⚠️  DO NOT store P4 data without explicit approval!        │
-└─────────────────────────────────────────────────────────────┘
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🔒 REAL WORLD: Classification Failures
-
-Case Study 1: The "Anonymous" Survey
-  ✗ Scenario: Researcher collected "anonymous" health surveys
-  ✗ Reality: Included zip code + age + gender
-  ✗ Problem: This combination can identify ~87% of US population
-  ✗ Classification error: Treated as P2, actually P3 (maybe P4!)
-  ✗ Consequence: Data breach notification to 1,200 participants
-  
-  Lesson: Combinations of "non-sensitive" data = sensitive data
-
-Case Study 2: The Collaboration Mistake  
-  ✗ Scenario: Shared student performance data with external partner
-  ✗ Reality: Didn't get data sharing agreement
-  ✗ Problem: FERPA violation (student data improperly disclosed)
-  ✗ Consequence: $50,000 fine, IRB investigation
-  
-  Lesson: P3 data sharing requires agreements, even with collaborators
-
-Case Study 3: The De-identification Assumption
-  ✗ Scenario: Published "de-identified" genomic sequences
-  ✗ Reality: Sequences + public genealogy DB = re-identification
-  ✗ Problem: Participants identified, privacy violated
-  ✗ Consequence: Study retracted, lawsuits filed
-  
-  Lesson: De-identification is harder than you think
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📋 Decision Tree: When In Doubt
-
-Start here: Does your data contain ANY of the following?
-
-  ┌─ Names, email addresses, phone numbers?
-  │  └─ YES → At least P3
-  │
-  ┌─ Student records or grades?
-  │  └─ YES → P3 (FERPA applies)
-  │
-  ┌─ Health information (even de-identified)?
-  │  └─ YES → At least P3, possibly P4 if identifiable
-  │
-  ┌─ Financial data, SSNs, credit cards?
-  │  └─ YES → P4 (stop, contact CISO office)
-  │
-  ┌─ Under confidentiality agreement?
-  │  └─ YES → Read agreement, probably P3
-  │
-  ┌─ Export controlled (ITAR/EAR)?
-  │  └─ YES → P4 (stop, contact export control office)
-  │
-  ┌─ Will be published/public eventually?
-  │  └─ YES but not yet → P2 until published
-  │
-  └─ None of the above?
-     └─ Probably P1 or P2, but verify with PI
-
-🆘 Still unsure? That's OK!
-   Contact: your institutional data classification office
-   They'll help you classify correctly (better safe than sorry)
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 Interactive Exercise: Classify Sarah's Data
-
-Your research scenario:
-  • Genomic sequences from Drosophila (fruit flies)
-  • No human subjects
-  • No personally identifiable information
-  • Funded by NSF grant
-  • Will be published when analysis complete
-  • No confidentiality agreements
-
-What classification level? [P1/P2/P3/P4]: P2
-
-✅ Correct! This is P2 (Internal) because:
-   • Not yet published (so not P1)
-   • No PII or regulated data (so not P3/P4)
-   • Internal research data until publication
-   • Non-human subject research
-
-When you publish, you can reclassify to P1.
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎯 Checkpoint Quiz (Higher Stakes)
-
-Q1: You have a dataset with: age (binned in 5-year ranges), 
-    zip code, and diagnosis. No names. What level?
-
-  a) P1 - It's de-identified
-  b) P2 - Internal use only
-  c) P3 - Can be re-identified
-  d) P4 - Contains health info
-
-Your answer: c
-
-✅ CORRECT! Even without names, this is P3 because:
-   • Age + zip code + diagnosis = potentially identifiable
-   • Health information requires protection even when de-identified
-   • Could violate HIPAA if re-identified
-   
-   This is called "quasi-identifiers" - seemingly anonymous
-   data that can be combined to identify individuals.
-
-Q2: Your collaborator at Stanford needs access to your 
-    P3 research data. What do you need?
-
-  a) Just share an S3 link
-  b) Data sharing agreement + BAA if needed
-  c) Their email address
-  d) Nothing special - they're at a university
-
-Your answer: b
-
-✅ PERFECT! For P3 data sharing, you need:
-   1. Data Sharing Agreement (legal framework)
-   2. Business Associate Agreement if health data (HIPAA)
-   3. Document what data is shared and why
-   4. Time-limited access (not permanent)
-   5. UCLA IRB approval if human subjects
-   
-   Contact: your institutional data sharing office for templates
-
-Q3: 🚨 COMPLIANCE SCENARIO: You discover you've been storing
-    what you thought was P2 data, but it actually contains 
-    email addresses (P3). What do you do?
-
-  a) Delete the emails and move on
-  b) Immediately report to CISO, re-classify, audit access
-  c) Just fix it going forward
-  d) Hope no one noticed
-
-Your answer: b
-
-✅ CRITICAL! When you discover a classification error:
-   
-   IMMEDIATE actions:
-   1. Stop any current data sharing
-   2. Email: your institutional security incident response team
-   3. Document: What data? How long misclassified? Who had access?
-   
-   CISO will help you:
-   • Re-classify correctly
-   • Audit who accessed the data
-   • Implement proper controls
-   • Determine if breach notification needed
-   
-   🎯 Key principle: It's never wrong to report. It IS wrong to hide.
-
-Q4: Can you mix P2 and P3 data in the same S3 bucket?
-
-  a) Yes, it's fine
-  b) Yes, but separate folders
-  c) No, always use separate buckets
-  d) Only with special permission
-
-Your answer: c
-
-✅ CORRECT! Best practice: Separate buckets per classification.
-   
-   Why?
-   • Bucket-level encryption settings differ
-   • Access controls are simpler
-   • Audit logging is clearer
-   • Reduces accidental exposure risk
-   • Compliance audits are easier
-   
-   If you MUST mix (rare cases):
-   • Get CISO approval
-   • Use highest classification's controls (P3)
-   • Document exception clearly
-   • More frequent audits required
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📋 UCLA Data Classification Quick Reference
-
-Save this! You'll need it.
-
-┌──────────┬────────────┬─────────────┬──────────────┬──────────────┐
-│ Question │     P1     │     P2      │      P3      │      P4      │
-├──────────┼────────────┼─────────────┼──────────────┼──────────────┤
-│ Contains │ None       │ None        │ Names, email │ SSN, PHI,    │
-│ PII?     │            │             │ phone, DOB   │ financials   │
-├──────────┼────────────┼─────────────┼──────────────┼──────────────┤
-│ Encrypt  │ Optional   │ Recommended │ REQUIRED     │ REQUIRED +   │
-│ at rest? │            │             │              │ key mgmt     │
-├──────────┼────────────┼─────────────┼──────────────┼──────────────┤
-│ Access   │ Public     │ UCLA only   │ Authorized   │ Minimal,     │
-│ control? │            │             │ users only   │ documented   │
-├──────────┼────────────┼─────────────┼──────────────┼──────────────┤
-│ Logging  │ Optional   │ Recommended │ REQUIRED     │ REQUIRED +   │
-│ required?│            │             │              │ monitoring   │
-├──────────┼────────────┼─────────────┼──────────────┼──────────────┤
-│ Breach   │ None       │ CISO notice │ CISO + OCR   │ CISO + OCR   │
-│ notify?  │            │             │ if PII       │ within 72h   │
-├──────────┼────────────┼─────────────┼──────────────┼──────────────┤
-│ UCLA     │ None       │ None        │ Training     │ CISO pre-    │
-│ approval?│            │             │ + compliance │ approval     │
-└──────────┴────────────┴─────────────┴──────────────┴──────────────┘
-
-Download full guide: ark classify --download-guide
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ Module 3 Complete! (25 minutes)
-
-🔒 Security Concepts Learned:
-  ✓ UC P1-P4 classification framework
-  ✓ Legal frameworks (FERPA, HIPAA, CUI)
-  ✓ Re-identification risks
-  ✓ Data sharing requirements
-  ✓ Incident response for classification errors
-  ✓ Compliance requirements per level
-
-Progress: ▓▓▓▓▓▓░░░░ 2/4 modules (50%)
-
-🎓 You now understand UCLA's data protection standards!
-
-Commands Unlocked:
-  ✓ ark classify --help    - Classification helper tool
-  ✓ ark bucket create      - Create buckets (with classification)
-
-Continue to Module 4: S3 Storage Security? [Y/n]: y
-```
+**Same experience in web interface:**
+*[Placeholder: Screenshot would show:
+- Create Bucket form with fields filled in (bucket name, classification dropdown)
+- Modal overlay with Cloudscape Alert component
+- Title: "Training Required"
+- Alert type: "warning"
+- Two module cards showing Module 3 and 4 requirements
+- Progress indicators showing "Not Started"
+- Large "Start Training" button
+- "Learn More" link
+- Background form is dimmed/disabled]*
 
 ---
 
-### 10:30 AM - Module 4: S3 Storage Security
+### 10:00 AM - Module 3: Data Classification
 
-```bash
-╔══════════════════════════════════════════════════════════════╗
-║  📚 Module 4: S3 Storage Security                            ║
-║  Duration: ~35 minutes                                       ║
-╚══════════════════════════════════════════════════════════════╝
-
-This module covers:
-  • Encryption at rest and in transit
-  • Bucket policies and access controls
-  • Versioning and lifecycle management
-  • Access logging and monitoring
-  • Common misconfigurations and how to avoid them
-
-[Sarah completes Module 4, learning about:]
-  • S3 encryption options (SSE-S3, SSE-KMS, SSE-C)
-  • How bucket policies differ from IAM policies
-  • Setting up lifecycle rules to reduce costs
-  • Enabling access logging for audit trails
-  • Preventing accidental public exposure
-  • MFA Delete for critical data
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-✅ Module 4 Complete! (35 minutes)
-
-Progress: ▓▓▓▓▓▓▓▓░░ 3/4 modules (75%)
-
-🔒 Security Concepts Learned:
-  ✓ S3 encryption methods and when to use each
-  ✓ Bucket policy design for least privilege
-  ✓ Lifecycle policies for cost optimization
-  ✓ Access logging configuration
-  ✓ Public access blocking (mandatory for P3/P4)
-  ✓ MFA Delete protection
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-🎉 Great progress! You can now:
-  ✓ Create S3 buckets with proper security
-  ✓ Upload and manage research data
-  ✓ Control access for collaborators
-
-Commands Unlocked:
-  ✓ ark bucket create
-  ✓ ark bucket upload
-  ✓ ark bucket share
-  ✓ ark bucket audit
-
-**Note on Module 2 (IAM)**: Sarah hasn't completed the IAM & Identity Management module yet. This is intentional - she'll complete it later when she needs to create users for lab members or manage permissions. Progressive training means you learn what you need, when you need it.
-
-Ready to create your bucket now? [Y/n]: y
-```
+Sarah completes Module 3, learning about institutional data sensitivity levels, then Module 4 about S3 security. [Content similar to original walkthrough]
 
 ---
 
-### 11:10 AM - Creating Her First Bucket (For Real)
+### 11:10 AM - Creating Her First Bucket
 
 ```bash
-$ ark bucket create --name sarah-genomics-data --classification P2
+$ ark bucket create --name sarah-genomics-data --classification internal
 
 ╔══════════════════════════════════════════════════════════════╗
 ║  🗄️  S3 Bucket Creation                                      ║
@@ -1214,63 +803,43 @@ $ ark bucket create --name sarah-genomics-data --classification P2
 → Validating bucket name...
   ✓ Name is valid and available
 
-→ Confirming classification: P2 (Internal Information)
-  
-  For P2 data, we'll configure:
+→ Confirming classification: Internal
+
+  For Internal data, we'll configure:
     • ✓ Encryption at rest (AES-256)
     • ✓ TLS required for uploads
     • ✓ Versioning (protects from accidents)
     • ✓ Access logging
     • ✓ Block public access
-    • ✗ MFA delete (not required for P2)
+    • ✗ MFA delete (not required for Internal)
 
-  This configuration meets UCLA policy for P2 data.
+  This configuration meets {INSTITUTION} policy for Internal data.
 
 Proceed? [Y/n]: y
 
 → Creating S3 bucket...
-  ⠋ Calling S3 CreateBucket API...
   ✓ Bucket created: sarah-genomics-data
 
 → Enabling encryption...
-  ⠙ Configuring AES-256-GCM...
   ✓ Encryption enabled
-  
-  💡 Files are automatically encrypted when uploaded!
 
 → Enabling versioning...
-  ⠹ Configuring version control...
   ✓ Versioning enabled
-  
-  💡 Previous versions kept for 90 days (configurable)
 
 → Configuring access logging...
-  ⠸ Creating audit log bucket...
-  ⠼ Enabling logging...
   ✓ Access logging enabled
-  
-  💡 All access is logged for security audits
 
 → Blocking public access...
-  ⠧ Applying block public access...
   ✓ Public access blocked
-  
-  💡 This bucket is private - only you can access it
-
-→ Setting lifecycle policy...
-  ⠇ Transitioning old data to cheaper storage...
-  ✓ Lifecycle policy applied
-  
-  💡 Data >90 days old moves to Glacier (90% cheaper!)
 
 → Adding cost allocation tags...
-  ✓ Tagged: PI=chen-lab, Department=biology, Project=drosophila
+  ✓ Tagged: PI=chen-lab, Department=biology, Project=genomics
 
 ╔══════════════════════════════════════════════════════════════╗
 ║  ✅ Bucket Created Successfully!                             ║
 ╠══════════════════════════════════════════════════════════════╣
 ║  Name: sarah-genomics-data                                   ║
-║  Classification: P2 (Internal)                               ║
+║  Classification: Internal                                    ║
 ║  Region: us-west-2                                           ║
 ║  Encryption: ✓ | Versioning: ✓ | Logging: ✓                 ║
 ║  Public Access: ✗ (Blocked)                                  ║
@@ -1278,193 +847,55 @@ Proceed? [Y/n]: y
 ╚══════════════════════════════════════════════════════════════╝
 
 Next steps:
-
   1️⃣  Upload your data:
      ark bucket upload --name sarah-genomics-data --file sequences.tar.gz
-     
+
   2️⃣  Share with collaborators:
-     ark bucket share --name sarah-genomics-data --with colleague@ucla.edu
-     
+     ark bucket share --name sarah-genomics-data --with colleague@{INSTITUTION}.edu
+
   3️⃣  Monitor costs:
      ark cost report --bucket sarah-genomics-data
 
-📖 Quick tips:
-   • Upload large files (>100MB) in parts for reliability
-   • Use folders to organize: sequences/, results/, metadata/
-   • Set up notifications: ark bucket notify --on-upload
-
 ⏱️  Total time: 47 seconds
+
+💡 View this bucket in web interface:
+   https://ark.{INSTITUTION}.edu/buckets/sarah-genomics-data
 ```
 
----
-
-### 12:00 PM - Uploading Data
-
-```bash
-$ ark bucket upload --name sarah-genomics-data --file drosophila-sequences.tar.gz
-
-╔══════════════════════════════════════════════════════════════╗
-║  📤 S3 Upload                                                ║
-╚══════════════════════════════════════════════════════════════╝
-
-File: drosophila-sequences.tar.gz
-Size: 487 GB
-Destination: s3://sarah-genomics-data/
-
-→ Analyzing file...
-  ✓ File is >100MB - will use multipart upload
-  ✓ Splitting into 1,000 parts of 500MB each
-
-→ Starting upload...
-  ⚠️  This will take approximately 2.5 hours on your connection
-  
-  💡 You can close this terminal - upload will continue!
-     Check status: ark bucket upload status
-
-  Progress: ▓▓▓▓▓▓▓▓░░░░░░░░░░░░ 40% (195 GB / 487 GB)
-  Speed: 21 MB/s
-  ETA: 1h 52m
-  
-  Parts completed: 402/1000
-  Failed/retrying: 3 (automatically retrying)
-
-[Upload continues in background...]
-
-✅ Upload complete! (2h 18m)
-
-→ Verifying upload integrity...
-  ✓ All parts uploaded successfully
-  ✓ File checksum matches
-
-Your data is now securely stored and encrypted in AWS!
-
-Access: s3://sarah-genomics-data/drosophila-sequences.tar.gz
-URL: https://sarah-genomics-data.s3.us-west-2.amazonaws.com/...
-
-Estimated monthly cost: $11.80 (based on 487GB + 10% growth)
-```
-
----
-
-### Day 2 - Sarah Needs Compute
-
-```bash
-$ ark instance launch --type m5.xlarge --purpose "Sequence alignment"
-
-╔══════════════════════════════════════════════════════════════╗
-║  ⚠️  Training Required                                       ║
-╠══════════════════════════════════════════════════════════════╣
-║  Before launching EC2 instances, complete:                   ║
-║                                                              ║
-║  Module 5: Compute Security & Cost Control ...... ✗          ║
-║    (~25 min)                                                 ║
-║                                                              ║
-║  This module covers:                                         ║
-║    • Choosing the right instance type                        ║
-║    • Auto-shutdown to prevent waste                          ║
-║    • Security groups and network access                      ║
-║    • Monitoring and cost optimization                        ║
-╚══════════════════════════════════════════════════════════════╝
-
-Start Module 5 now? [Y/n]: y
-
-[Sarah completes Module 5 - 23 minutes]
-
-✅ All Training Complete! 🎉
-
-Progress: ▓▓▓▓▓▓▓▓▓▓ 4/4 modules (100%)
-
-Total time: 88 minutes
-Overall score: 97%
-
-Generating certificate...
-✓ Certificate saved: ~/Downloads/ucla-aws-training-sarah-chen.pdf
-
-You now have full access to all Ark commands!
-```
-
----
-
-### Launching Her First Instance
-
-```bash
-$ ark instance launch --type m5.xlarge --purpose "Sequence alignment"
-
-╔══════════════════════════════════════════════════════════════╗
-║  💻 EC2 Instance Launch                                      ║
-╚══════════════════════════════════════════════════════════════╝
-
-→ Instance configuration:
-  Type: m5.xlarge (4 vCPUs, 16GB RAM)
-  Cost: $0.192/hour (~$140/month if running 24/7)
-  
-  ⚠️  COST WARNING: This will cost $4.61 per day if left running!
-
-→ Recommended: Set auto-shutdown
-  Shut down after idle for: [1h/4h/8h/12h/24h/never]: 4h
-
-  ✓ Instance will auto-shutdown after 4 hours of inactivity
-  💡 This could save you ~$100/month!
-
-→ Selecting AMI (operating system)...
-  ✓ Using: UCLA Bio-Linux 2024 (pre-configured for genomics)
-  
-  Includes: BWA, BLAST, samtools, Python 3.11, R 4.3
-
-→ Configuring security group...
-  ✓ SSH access from your IP only
-  ✓ No public internet access (uses UCLA VPN)
-
-→ Creating SSH key pair...
-  ✓ Key saved: ~/.ssh/sarah-genomics-key.pem
-  
-  ⚠️  Keep this file safe! It's your password.
-
-→ Launching instance...
-  ⠋ Requesting capacity...
-  ⠙ Instance starting...
-  ⠹ Waiting for instance to be ready...
-  
-  ✓ Instance running: i-0123456789abcdef
-
-╔══════════════════════════════════════════════════════════════╗
-║  ✅ Instance Ready!                                          ║
-╠══════════════════════════════════════════════════════════════╣
-║  Instance ID: i-0123456789abcdef                             ║
-║  Public IP: 34.216.45.123                                    ║
-║  Status: Running                                             ║
-║  Auto-shutdown: After 4h idle                                ║
-╚══════════════════════════════════════════════════════════════╝
-
-Connect via SSH:
-
-  ssh -i ~/.ssh/sarah-genomics-key.pem ec2-user@34.216.45.123
-
-Or use Ark's built-in SSH:
-
-  ark instance connect --id i-0123456789abcdef
-
-💡 Your S3 bucket is already mounted at /mnt/sarah-genomics-data/
-
-⏱️  Total time: 3m 12s
-```
+**Checking the web interface:**
+*[Placeholder: Screenshot would show:
+- Buckets list page with Cloudscape Table component
+- One row showing sarah-genomics-data bucket
+- Columns: Name, Classification (badge), Region, Size (0 GB), Cost ($0.00), Created (timestamp)
+- Status column with green "Active" badge
+- Actions menu with: Upload Files, Share, View Details, Delete
+- Top of page has metrics cards showing: Total Buckets (1), Total Storage (0 GB), Monthly Cost ($0.00)
+- "Create Bucket" button in top-right]*
 
 ---
 
 ### Week 2 - Sarah is Self-Sufficient
 
-**What happened between Day 1 and Week 2:**
-
 Over the past two weeks, Sarah has:
-- ✓ Completed **Module 2 (IAM & Identity Management)** when she needed to give her grad student read-only access
-- ✓ Uploaded 487 GB of genomic sequencing data to S3
-- ✓ Launched and terminated 5 compute instances for different analyses
-- ✓ Set up multiple billing alerts and stayed within her $150/month budget
-- ✓ Shared data securely with two external collaborators
-- ✓ Run weekly security audits (recommended practice)
+- ✓ Completed all 4 training modules (~2 hours total)
+- ✓ Uploaded 487 GB of genomic data to S3 (via web interface's drag-and-drop)
+- ✓ Launched EC2 instances for analysis (via CLI for scripting)
+- ✓ Stayed within her $150/month budget
+- ✓ Shared data with two external collaborators securely
+- ✓ Uses both CLI (for scripts) and web (for monitoring)
 
-**She's now using Ark routinely as part of her research workflow:**
+**Using web interface for monitoring:**
+*[Placeholder: Screenshot would show main dashboard with:
+- Header with {INSTITUTION} logo and "Welcome back, Sarah Chen"
+- Cloudscape SpaceBetween layout with multiple Container components
+- KPI cards showing: 2 Buckets, 3 Instances (1 running, 2 stopped), $127.43 this month
+- Line chart showing cost trend over past 30 days
+- Table showing active resources with status badges
+- Alert banner: "Budget Alert: You've used 85% of your $150 monthly budget"
+- Quick actions: Create Bucket, Launch Instance, View Training Certificate
+- Security score widget: 94/100 with "Excellent" badge]*
 
+**Running security audit via CLI:**
 ```bash
 $ ark audit scan
 
@@ -1478,72 +909,32 @@ Findings:
   • sarah-genomics-data: Perfect ✓
   • sarah-results: Perfect ✓
 
-✓ EC2 Instances (1)
+✓ EC2 Instances (1 running)
   • i-0123456789abcdef: Auto-shutdown enabled ✓
-  
+
 ⚠️  IAM
   • MFA not enabled on your user account
     Fix: ark iam mfa enable
-    
+
 💰 Cost Optimization
   • You could save $45/month by switching idle instances to t3.medium
     Current spend: $127/month (on track)
-    Billing alarm: $100/month (triggered - check email!)
+    Budget: $150/month
 
 ✓ Compliance
   • All resources properly tagged ✓
   • Access logging enabled ✓
   • Encryption at rest enabled ✓
 
-📊 Full report: ~/ark-audit-report-2025-12-15.pdf
+📊 Full report also available at:
+   https://ark.{INSTITUTION}.edu/audit/latest
 ```
-
----
-
-### Summary: Sarah's Journey
-
-**Total Time Investment:**
-- Installation & setup: 15 minutes
-- Training: 120 minutes (2 hours, spaced over 2 days)
-- First bucket creation: 5 minutes
-- First instance launch: 10 minutes
-
-**Total: ~2.5 hours** from zero to productive AWS researcher
-
-**Training Breakdown:**
-- Module 1: AWS Basics (35 min)
-- Module 2: IAM & Identity Management (25 min) - completed Day 2
-- Module 3: UC Data Classification (25 min)
-- Module 4: S3 Storage Security (35 min)
-
-**What Sarah Can Now Do:**
-✓ Store and share research data securely  
-✓ Launch compute instances for analysis  
-✓ Monitor and control costs  
-✓ Understand compliance requirements  
-✓ Self-audit security posture  
-✓ Know when to ask for help
-
-**Security Incidents Prevented:**
-- ✗ Unencrypted sensitive data
-- ✗ Publicly accessible buckets  
-- ✗ Runaway compute costs
-- ✗ Missing audit trails
-- ✗ Non-compliant data handling
-
-**IT Support Tickets Avoided:**
-- "How do I use AWS?" → Trained via tool
-- "I forgot to shut down my instance!" → Auto-shutdown
-- "My bill is $5000!" → Billing alarms + cost education
-- "Is my data secure?" → Built-in compliance
 
 ---
 
 ## Appendix B: Module Template Structure
 
-This appendix shows how training modules are structured and customized. Institutional administrators can modify these templates to meet specific requirements.
-
----
+Training modules in Ark are defined using YAML configuration and Markdown content. This allows institutions to customize modules to their specific policies and requirements.
 
 ### Module Configuration File: `module.yaml`
 
@@ -1552,22 +943,22 @@ This appendix shows how training modules are structured and customized. Institut
 module:
   id: "03-data-classification"
   version: "2.1.0"
-  name: "UC Data Classification (P1-P4)"
+  name: "Data Classification"
   short_description: "Understanding data sensitivity and protection requirements"
   estimated_minutes: 25
-  
+
   # What this module teaches
   learning_objectives:
-    - "Classify data using UC P1-P4 framework"
-    - "Identify PII and regulated data types"
+    - "Classify data using institutional framework"
+    - "Identify sensitive data types"
     - "Understand legal frameworks (FERPA, HIPAA, CUI)"
     - "Recognize re-identification risks"
     - "Apply appropriate security controls per classification"
-  
+
   # Required before this module
   prerequisites:
     - "01-aws-basics"
-  
+
   # What becomes available after completion
   unlocks:
     commands:
@@ -1575,7 +966,7 @@ module:
       - "ark classify"
     next_modules:
       - "04-s3-security"
-  
+
   # Passing requirements
   completion_criteria:
     quiz_passing_score: 85  # Higher for compliance content
@@ -1584,627 +975,174 @@ module:
 
 # Content sources (can be remote URLs or local files)
 content:
-  tutorial: "https://ucla-training.s3.amazonaws.com/modules/03/tutorial.md"
-  quiz: "https://ucla-training.s3.amazonaws.com/modules/03/quiz.yaml"
-  scenarios: "https://ucla-training.s3.amazonaws.com/modules/03/scenarios.yaml"
-  resources:
-    - name: "UC Data Classification Policy"
-      url: "https://policy.ucop.edu/doc/7000543/BFB-IS-3"
-    - name: "FERPA Quick Reference"
-      url: "https://it.ucla.edu/security/ferpa"
-    - name: "HIPAA Compliance Guide"
-      url: "https://hipaa.ucla.edu/guide"
+  tutorial: "https://training.{INSTITUTION}.edu/modules/03/tutorial.md"
+  quiz: "https://training.{INSTITUTION}.edu/modules/03/quiz.yaml"
+  scenarios: "https://training.{INSTITUTION}.edu/modules/03/scenarios.yaml"
 
 # Institution-specific customization
 customization:
-  institution: "UCLA"
-  ciso_sponsor: true  # Indicates CISO office reviewed this module
-  
+  institution: "{INSTITUTION}"
+
   # Institution-specific sections to inject
   custom_sections:
     - position: "after_intro"
-      content_url: "https://ucla-training.s3.amazonaws.com/modules/03/ucla-specific.md"
-      title: "UCLA-Specific Requirements"
-    
-    - position: "before_quiz"
-      content_url: "https://ucla-training.s3.amazonaws.com/modules/03/case-studies.md"
-      title: "Real UCLA Incidents (Anonymized)"
-  
+      content_url: "https://training.{INSTITUTION}.edu/modules/03/policy.md"
+      title: "{INSTITUTION}-Specific Requirements"
+
   # Override default contact information
   contacts:
-    questions: "your institutional data classification office"
-    incidents: "your institutional security incident response team"
-    compliance: "your institutional HIPAA compliance office"
+    questions: "data-classification@{INSTITUTION}.edu"
+    incidents: "security@{INSTITUTION}.edu"
+    compliance: "compliance@{INSTITUTION}.edu"
+```
 
-# Analytics and tracking
-tracking:
-  record_time_spent: true
-  record_quiz_attempts: true
-  record_common_mistakes: true
-  send_completion_to: "https://ucla-training.ucla.edu/api/completion"
+Institutions can host their own training content, customizing examples, case studies, and policies while maintaining the core Ark framework.
 
-# Compliance attestation
-compliance:
-  reviewed_by: "UCLA CISO Office"
-  review_date: "2025-11-15"
-  next_review: "2026-05-15"
-  frameworks_covered:
-    - "UC BFB-IS-3 (Data Classification)"
-    - "FERPA"
-    - "HIPAA"
-    - "NIST 800-171 (CUI)"
+---
+
+## Appendix C: Architecture Deep Dive
+
+### Component Interaction Flow
+
+**Example: User creates S3 bucket via CLI**
+
+```
+1. User executes command:
+   $ ark bucket create --name my-data --classification internal
+
+2. CLI validates local syntax, sends to agent:
+   POST http://localhost:8737/api/bucket/create
+   Headers: Authorization: Bearer {local_jwt}
+   Body: { name: "my-data", classification: "internal" }
+
+3. Agent checks training status:
+   GET https://ark.{INSTITUTION}.edu/api/user/training-status
+   Response: { "s3_security": "completed", "data_classification": "completed" }
+
+4. Agent validates policy locally:
+   - Internal data requires encryption ✓
+   - User has completed training ✓
+   - Bucket name is valid ✓
+
+5. Agent makes AWS API call:
+   s3.CreateBucket(bucket_name)
+   s3.PutBucketEncryption(...)
+   s3.PutBucketVersioning(...)
+   s3.PutPublicAccessBlock(...)
+
+6. Agent logs to institutional backend (async):
+   POST https://ark.{INSTITUTION}.edu/api/audit/events
+   Body: { user, action: "s3:CreateBucket", resource: "my-data", ... }
+
+7. Agent returns success to CLI:
+   Response: { status: "success", bucket: { name, arn, region, ... } }
+
+8. CLI displays result to user
+```
+
+**Same flow for web interface:**
+
+```
+1. User clicks "Create Bucket" in web UI
+
+2. Web app sends to agent:
+   POST http://localhost:8737/api/bucket/create
+   Headers: Authorization: Bearer {local_jwt}
+   Body: { name: "my-data", classification: "internal" }
+
+3-7. [Identical to CLI flow]
+
+8. Web app receives response, updates UI:
+   - Shows success notification (Cloudscape Flash)
+   - Adds bucket to table
+   - Updates cost estimate
+```
+
+### Security Boundaries
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│ User's Machine (TRUSTED)                                    │
+│                                                             │
+│  ┌──────────┐                                              │
+│  │ AWS Creds│ ← Never leave this machine                   │
+│  │ (SSO)    │                                              │
+│  └────┬─────┘                                              │
+│       │                                                     │
+│  ┌────▼─────────────┐       ┌─────────────────┐           │
+│  │  Local Agent     │       │  CLI / Web      │           │
+│  │  (Go service)    │◄──────┤  (User Interface)│          │
+│  │  localhost:8737  │       │                 │           │
+│  └────┬─────────────┘       └─────────────────┘           │
+│       │                                                     │
+│       │ ① AWS API calls (with creds)                       │
+│       │ ② Policy checks (training, compliance)             │
+│       │                                                     │
+└───────┼─────────────────────────────────────────────────────┘
+        │
+        │ ② HTTPS (no creds, only user actions)
+        │
+┌───────▼─────────────────────────────────────────────────────┐
+│ Institutional Backend (UNTRUSTED for AWS creds)             │
+│                                                             │
+│  • Training progress                                        │
+│  • Policy definitions                                       │
+│  • Audit logs                                              │
+│  • User provisioning                                        │
+│  • Certificates                                            │
+│  • Reporting                                               │
+│                                                             │
+│  Never sees AWS credentials ✓                              │
+└─────────────────────────────────────────────────────────────┘
+```
+
+**Key Security Principle**: AWS credentials never leave the user's machine. The institutional backend never has access to AWS credentials, only to training state and audit logs.
+
+### Offline Capability
+
+```
+User working offline (airplane, field site):
+
+1. Training content cached locally:
+   ~/.ark/cache/modules/*.md
+
+2. Can complete training offline:
+   - Read content from cache
+   - Take quizzes (validated locally)
+   - Progress saved to local SQLite
+
+3. When back online:
+   - Agent syncs progress to backend
+   - Backend validates quiz answers
+   - Certificates generated
+   - Audit logs uploaded
+```
+
+### Cross-Interface Sync
+
+```
+Scenario: User starts training on CLI, continues on web
+
+1. CLI: User starts Module 3
+   - Progress: { module: "03", status: "in_progress", page: 5 }
+   - Saved to: Backend + Local cache
+
+2. Web: User visits training page
+   - Fetches progress from backend via agent
+   - Shows Module 3 at page 5 (resume point)
+   - User continues in web browser
+
+3. Web: User completes Module 3
+   - Progress: { module: "03", status: "completed", score: 90 }
+   - Saved to: Backend + Local cache
+
+4. CLI: User runs command requiring Module 3
+   - Agent checks backend
+   - Module 3 is completed ✓
+   - Command proceeds
 ```
 
 ---
 
-### Tutorial Content: `tutorial.md`
-
-Tutorial content is written in enhanced Markdown with special syntax for interactive elements:
-
-```markdown
-# Module 3: UC Data Classification
-
-## Section 1: Introduction
-
-:::info
-This module is sponsored by the UCLA CISO Office to ensure 
-all researchers understand data protection requirements.
-:::
-
-Understanding data sensitivity is CRITICAL for compliance and security.
-
-:::warning title="Getting This Wrong Has Consequences"
-- Federal fines ($100k - $50M+ per incident)
-- Loss of grant funding
-- IRB suspension
-- Legal liability
-- Reputational damage to UCLA
-:::
-
----
-
-## Section 2: The Four Protection Levels
-
-:::classification level="P1"
-### P1 - Public Information
-
-**Definition**: Information intended for public distribution
-
-**Examples**:
-- Published research papers
-- Public course catalogs
-- Campus maps
-
-**Requirements**: None (already public)
-
-**AWS Configuration**: Standard S3, no special controls
-:::
-
-:::classification level="P3" highlight="true"
-### P3 - Protected Information ⭐ MOST COMMON
-
-**Definition**: Sensitive data requiring protection
-
-**Examples**:
-- Personal Identifiable Information (PII)
-  - Names, addresses, phone numbers
-  - Email addresses, student IDs
-- Student records (FERPA protected)
-- De-identified health data
-- Research data under confidentiality agreements
-
-**Legal Frameworks**:
-- FERPA (Family Educational Rights and Privacy Act)
-- PII protection laws (CCPA, GDPR if applicable)
-- Contractual confidentiality obligations
-
-**Requirements**:
-✓ Encryption at rest (REQUIRED)
-✓ Encryption in transit (REQUIRED)
-✓ Access logging for audits
-✓ Strong access controls
-✓ MFA for administrators
-
-**AWS Configuration**: Ark P3 configuration enforces ALL requirements
-
-:::alert type="danger"
-**Common Mistake**: "It's de-identified so it's fine"
-
-Even de-identified data can often be re-identified! When in doubt, treat as P3.
-:::
-:::
-
----
-
-## Section 3: Real World Examples
-
-:::case-study severity="high"
-### Case Study: The "Anonymous" Survey Breach
-
-**Institution**: Major Research University (2024)
-
-**Scenario**: Researcher collected "anonymous" health surveys
-
-**What they included**:
-- Zip code
-- Age (exact)
-- Gender
-- Medical condition
-
-**The Problem**: These 4 data points can identify ~87% of the US population
-
-**Classification Error**: Treated as P2, actually P3 (possibly P4!)
-
-**Consequence**: 
-- Data breach notification to 1,200 participants
-- $250,000 fine
-- IRB investigation
-- 6-month research suspension
-
-**Lesson**: Combinations of "non-sensitive" data = sensitive data
-:::
-
----
-
-## Section 4: Interactive Exercise
-
-:::interactive type="classification-exercise"
-**Exercise**: Classify this dataset
-
-You have a dataset containing:
-- Genomic sequences from fruit flies (Drosophila)
-- No human subjects
-- No personally identifiable information
-- Funded by NSF grant
-- Will be published when analysis complete
-- No confidentiality agreements
-
-What classification level?
-
-[P1] [P2] [P3] [P4]
-
-:::feedback correct="P2"
-✅ **Correct!** This is P2 (Internal) because:
-
-- Not yet published (so not P1)
-- No PII or regulated data (so not P3/P4)
-- Internal research data until publication
-- Non-human subject research
-
-**When you publish, you can reclassify to P1.**
-
-:::tip
-Use this command to reclassify later:
-```bash
-ark bucket reclassify --name my-bucket --from P2 --to P1
-```
-:::
-:::
-
----
-
-## Section 5: Decision Tree
-
-:::decision-tree
-# Data Classification Decision Tree
-
-**Start**: Does your data contain ANY of the following?
-
-- Names, email addresses, phone numbers?
-  → YES: **At least P3**
-  
-- Student records or grades?
-  → YES: **P3 (FERPA applies)**
-  
-- Health information (even de-identified)?
-  → YES: **At least P3, possibly P4 if identifiable**
-  
-- Financial data, SSNs, credit cards?
-  → YES: **P4 (stop, contact CISO office)**
-  
-- Under confidentiality agreement?
-  → YES: **Read agreement, probably P3**
-  
-- Export controlled (ITAR/EAR)?
-  → YES: **P4 (stop, contact export control office)**
-  
-- Will be published/public eventually?
-  → YES but not yet: **P2 until published**
-  
-- None of the above?
-  → **Probably P1 or P2, but verify with PI**
-
-:::help
-**Still unsure?** That's OK!
-
-Contact: your institutional data classification office
-
-Better to ask than to misclassify.
-:::
-:::
-
----
-
-## Section 6: UCLA-Specific Requirements
-
-<!-- This section is injected from custom_sections in module.yaml -->
-
-{{% custom_section position="after_intro" %}}
-
----
-
-## Checkpoint Quiz
-
-You must score 85% or higher to proceed.
-
-{{% quiz source="quiz.yaml" %}}
-```
-
----
-
-### Quiz Definition: `quiz.yaml`
-
-```yaml
-# Quiz configuration
-quiz:
-  id: "03-data-classification-quiz"
-  passing_score: 85
-  randomize_questions: true
-  randomize_answers: true
-  max_attempts: 3
-  show_correct_answers_after: 2  # After 2 attempts, show correct answers
-
-questions:
-  - id: "q1-identify-p3"
-    type: "multiple_choice"
-    points: 20
-    question: |
-      You have a dataset with: age (binned in 5-year ranges), 
-      zip code, and diagnosis. No names. What classification level?
-    
-    options:
-      - id: "a"
-        text: "P1 - It's de-identified"
-        correct: false
-      
-      - id: "b"
-        text: "P2 - Internal use only"
-        correct: false
-      
-      - id: "c"
-        text: "P3 - Can be re-identified"
-        correct: true
-      
-      - id: "d"
-        text: "P4 - Contains health info"
-        correct: false
-    
-    feedback:
-      correct: |
-        ✅ CORRECT! Even without names, this is P3 because:
-        
-        - Age + zip code + diagnosis = potentially identifiable
-        - Health information requires protection even when de-identified
-        - Could violate HIPAA if re-identified
-        
-        This is called "quasi-identifiers" - seemingly anonymous
-        data that can be combined to identify individuals.
-      
-      incorrect: |
-        ❌ Not quite. Consider:
-        
-        - Can these data points identify someone?
-        - What if combined with public databases?
-        - Does it contain health information?
-        
-        Think about re-identification risk.
-    
-    resources:
-      - "https://www.hhs.gov/hipaa/for-professionals/privacy/special-topics/de-identification/"
-
-  - id: "q2-data-sharing"
-    type: "multiple_choice"
-    points: 20
-    question: |
-      Your collaborator at Stanford needs access to your P3 research data.
-      What do you need?
-    
-    options:
-      - id: "a"
-        text: "Just share an S3 link"
-        correct: false
-      
-      - id: "b"
-        text: "Data sharing agreement + BAA if needed"
-        correct: true
-      
-      - id: "c"
-        text: "Their email address"
-        correct: false
-      
-      - id: "d"
-        text: "Nothing special - they're at a university"
-        correct: false
-    
-    feedback:
-      correct: |
-        ✅ PERFECT! For P3 data sharing, you need:
-        
-        1. Data Sharing Agreement (legal framework)
-        2. Business Associate Agreement if health data (HIPAA)
-        3. Document what data is shared and why
-        4. Time-limited access (not permanent)
-        5. UCLA IRB approval if human subjects
-        
-        Contact: your institutional data sharing office for templates
-
-  - id: "q3-classification-error"
-    type: "multiple_choice"
-    points: 20
-    question: |
-      🚨 COMPLIANCE SCENARIO: You discover you've been storing
-      what you thought was P2 data, but it actually contains 
-      email addresses (P3). What do you do?
-    
-    options:
-      - id: "a"
-        text: "Delete the emails and move on"
-        correct: false
-      
-      - id: "b"
-        text: "Immediately report to CISO, re-classify, audit access"
-        correct: true
-      
-      - id: "c"
-        text: "Just fix it going forward"
-        correct: false
-      
-      - id: "d"
-        text: "Hope no one noticed"
-        correct: false
-    
-    feedback:
-      correct: |
-        ✅ CRITICAL! When you discover a classification error:
-        
-        IMMEDIATE actions:
-        1. Stop any current data sharing
-        2. Email: your institutional security incident response team
-        3. Document: What data? How long? Who had access?
-        
-        The CISO office will help you:
-        - Re-classify correctly
-        - Audit who accessed the data
-        - Implement proper controls
-        - Determine if breach notification needed
-        
-        🎯 Key principle: It's never wrong to report.
-    
-    tags: ["incident-response", "compliance", "critical"]
-
-  - id: "q4-bucket-mixing"
-    type: "multiple_choice"
-    points: 20
-    question: |
-      Can you mix P2 and P3 data in the same S3 bucket?
-    
-    options:
-      - id: "a"
-        text: "Yes, it's fine"
-        correct: false
-      
-      - id: "b"
-        text: "Yes, but in separate folders"
-        correct: false
-      
-      - id: "c"
-        text: "No, always use separate buckets"
-        correct: true
-      
-      - id: "d"
-        text: "Only with special permission"
-        correct: false
-    
-    feedback:
-      correct: |
-        ✅ CORRECT! Best practice: Separate buckets per classification.
-        
-        Why?
-        - Bucket-level encryption settings differ
-        - Access controls are simpler
-        - Audit logging is clearer
-        - Reduces accidental exposure risk
-        - Compliance audits are easier
-
-  - id: "q5-scenario"
-    type: "scenario"
-    points: 20
-    question: |
-      **Scenario**: You're analyzing survey data that includes:
-      - Participant ID (non-identifiable code)
-      - County of residence
-      - Year of birth
-      - Political affiliation
-      - Voting history
-      
-      This data will inform policy recommendations. How do you classify it?
-    
-    correct_classification: "P3"
-    
-    reasoning_required: true
-    min_reasoning_length: 50
-    
-    sample_reasoning: |
-      This should be classified as P3 because:
-      
-      1. Demographic data (county, year of birth) combined with
-         sensitive information (political affiliation, voting history)
-         could potentially identify individuals
-      
-      2. Political information is sensitive even when aggregated
-      
-      3. While participant IDs are non-identifiable, the combination
-         of other factors creates re-identification risk
-      
-      4. Policy recommendations may involve sensitive populations
-    
-    grading_rubric:
-      - keyword: "re-identification"
-        points: 5
-      - keyword: "sensitive"
-        points: 3
-      - keyword: "combination"
-        points: 3
-      - mentions_demographics: true
-        points: 4
-      - mentions_political_sensitivity: true
-        points: 5
-
-# Post-quiz feedback
-post_quiz:
-  pass:
-    message: |
-      🎉 Excellent work! You've demonstrated strong understanding
-      of UCLA's data classification framework.
-      
-      Score: {score}%
-      
-      You can now create S3 buckets with proper classification.
-    
-    next_steps:
-      - "Continue to Module 4: S3 Storage Security"
-      - "Download classification quick reference"
-      - "Bookmark: your institutional data classification office"
-  
-  fail:
-    message: |
-      You scored {score}% (need 85% to pass).
-      
-      Don't worry! Data classification is complex.
-      
-      Review these sections:
-      {weak_areas}
-      
-      You have {attempts_remaining} attempt(s) remaining.
-    
-    resources:
-      - "Review the decision tree in Section 5"
-      - "Read the case studies in Section 3"
-      - "Contact your institutional data classification office for help"
-```
-
----
-
-### Scenarios: `scenarios.yaml`
-
-```yaml
-# Interactive scenario-based learning
-scenarios:
-  - id: "scenario-classify-research-data"
-    title: "Classify Your Research Data"
-    description: |
-      Walk through a realistic data classification scenario
-    
-    steps:
-      - prompt: "What type of research data do you work with?"
-        options:
-          - "Human subjects research"
-          - "Animal research"
-          - "Computational/modeling"
-          - "Materials science"
-          - "Other"
-        branch_on_selection: true
-      
-      - prompt: "Does your data contain any identifiable information about individuals?"
-        type: "yes_no"
-        if_yes:
-          guidance: "This likely requires P3 or P4 classification"
-          next: "identify-pii-types"
-        if_no:
-          next: "check-other-sensitive"
-      
-      # ... more scenario steps ...
-    
-    completion:
-      requires_correct_classification: true
-      provides_certificate: true
-```
-
----
-
-### Customization Points for Institutions
-
-Institutions can customize:
-
-1. **Content URLs**: Host training materials on their own infrastructure
-2. **Custom sections**: Inject institution-specific content anywhere
-3. **Contact information**: Override default support contacts
-4. **Passing scores**: Adjust based on risk tolerance
-5. **Case studies**: Add institution-specific incidents (anonymized)
-6. **Legal frameworks**: Emphasize relevant compliance requirements
-7. **Quiz questions**: Add institution-specific scenarios
-8. **Resources**: Link to internal policies and procedures
-9. **CISO sponsorship**: Mark modules as officially reviewed
-10. **Compliance tracking**: Send completion data to institutional systems
-
----
-
-### Example: Adapting for Different Institutions
-
-**UCLA Version** (Current):
-- UC P1-P4 classification
-- FERPA, HIPAA, CUI emphasis
-- UCLA CISO contacts
-- UCLA-specific case studies
-
-**MIT Version** (Hypothetical):
-```yaml
-customization:
-  institution: "MIT"
-  classification_system: "TLP"  # Traffic Light Protocol
-  frameworks:
-    - "ITAR/EAR" # Export control emphasis
-    - "CMMC Level 2"
-    - "DFARS"
-  contacts:
-    questions: "institutional information security"
-    incidents: "institutional CERT team"
-```
-
-**NIH Intramural** (Hypothetical):
-```yaml
-customization:
-  institution: "NIH"
-  classification_system: "NIH-specific"
-  frameworks:
-    - "FISMA High"
-    - "FedRAMP"
-    - "HIPAA (strict)"
-  additional_requirements:
-    - "All data is P3 minimum"
-    - "Requires ISSO approval"
-```
-
----
-
-### Benefits of This Template System
-
-**For Ark Tool:**
-- Consistent learning experience
-- Programmatic content validation
-- Automated progress tracking
-- Easy A/B testing of content
-
-**For Institutions:**
-- Full content control
-- Rapid deployment of updates
-- Compliance audit trail
-- Multi-tenancy support
-
-**For Learners:**
-- Always current content
-- Institution-relevant examples
-- Consistent UI/UX
-- Offline capability (cached content)
-
----
+**For implementation details and timeline, see [ROADMAP.md](ROADMAP.md)**
+**For technical gaps and recommendations, see [ark-gaps-and-suggestions.md](ark-gaps-and-suggestions.md)**
