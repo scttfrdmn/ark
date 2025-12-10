@@ -1,5 +1,5 @@
 # Build stage
-FROM golang:1.23-alpine AS builder
+FROM golang:1.24-alpine AS builder
 
 # Install build dependencies
 RUN apk add --no-cache git make
@@ -35,8 +35,9 @@ RUN addgroup -g 1000 ark && \
 
 WORKDIR /app
 
-# Copy binary from builder
+# Copy binary and migrations from builder
 COPY --from=builder /build/bin/ark-backend /app/ark-backend
+COPY --from=builder /build/migrations /app/migrations
 
 # Set ownership
 RUN chown -R ark:ark /app

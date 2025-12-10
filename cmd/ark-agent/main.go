@@ -15,6 +15,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/scttfrdmn/ark/internal/agent/lockfile"
 	"github.com/scttfrdmn/ark/internal/agent/store"
 )
 
@@ -58,6 +59,24 @@ func main() {
 		slog.Error("failed to create data directory", "error", err, "dir", dataDir)
 		os.Exit(1)
 	}
+
+	// Acquire lock to ensure single instance
+	lockPath := filepath.Join(dataDir, "agent.lock")
+	lock := lockfile.New(lockPath)
+	if err := lock.Acquire(); err != nil {
+		slog.Error("failed to acquire lock", "error", err)
+		fmt.Fprintf(os.Stderr, "Error: %v\n", err)
+		fmt.Fprintf(os.Stderr, "Another agent instance may already be running.\n")
+		fmt.Fprintf(os.Stderr, "Use 'ark agent status' to check agent status.\n")
+		os.Exit(1)
+	}
+	defer func() {
+		if err := lock.Release(); err != nil {
+			slog.Error("failed to release lock", "error", err)
+		}
+	}()
+
+	slog.Info("lock acquired", "path", lockPath)
 
 	// Open database
 	dbPath := filepath.Join(dataDir, "agent.db")
@@ -143,10 +162,16 @@ func (s *server) setupRouter() http.Handler {
 			r.Get("/version", s.handleVersion)
 		})
 
-		// AWS credential endpoints (future)
-		// r.Route("/aws", func(r chi.Router) {
-		//     r.Get("/credentials", s.handleGetCredentials)
-		//     r.Post("/credentials/refresh", s.handleRefreshCredentials)
+		// Credentials management
+		r.Route("/credentials", func(r chi.Router) {
+			r.Post("/", s.handleSetCredentials)
+			r.Get("/", s.handleListCredentials)
+			r.Delete("/{profile}", s.handleDeleteCredentials)
+		})
+
+		// AWS operations (future)
+		// r.Route("/s3", func(r chi.Router) {
+		//     r.Post("/buckets", s.handleCreateBucket)
 		// })
 
 		// Agent configuration endpoints (future)

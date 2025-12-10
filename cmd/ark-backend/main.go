@@ -14,6 +14,7 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/scttfrdmn/ark/internal/database"
 )
 
 var (
@@ -39,6 +40,46 @@ func main() {
 		"commit", commitSHA,
 		"buildDate", buildDate,
 	)
+
+	// Initialize database
+	dbCfg := database.Config{
+		Host:     getEnv("DB_HOST", "localhost"),
+		Port:     getEnvInt("DB_PORT", 5432),
+		User:     getEnv("DB_USER", "ark"),
+		Password: getEnv("DB_PASSWORD", "ark_dev_password"),
+		DBName:   getEnv("DB_NAME", "ark"),
+		SSLMode:  getEnv("DB_SSLMODE", "disable"),
+	}
+
+	db, err := database.New(dbCfg)
+	if err != nil {
+		slog.Error("failed to connect to database", "error", err)
+		os.Exit(1)
+	}
+	defer db.Close()
+
+	slog.Info("database connected",
+		"host", dbCfg.Host,
+		"port", dbCfg.Port,
+		"dbname", dbCfg.DBName,
+	)
+
+	// Run migrations
+	migrationsPath := getEnv("MIGRATIONS_PATH", "./migrations")
+	if err := db.RunMigrations(migrationsPath); err != nil {
+		slog.Error("failed to run migrations", "error", err)
+		os.Exit(1)
+	}
+
+	version, dirty, err := db.MigrationVersion(migrationsPath)
+	if err != nil {
+		slog.Warn("could not get migration version", "error", err)
+	} else {
+		slog.Info("migrations completed",
+			"version", version,
+			"dirty", dirty,
+		)
+	}
 
 	// Create server
 	addr := fmt.Sprintf("%s:%s", defaultHost, getEnv("PORT", defaultPort))
@@ -178,6 +219,17 @@ func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
+	}
+	return defaultValue
+}
+
+// getEnvInt gets an integer environment variable or returns a default value
+func getEnvInt(key string, defaultValue int) int {
+	if value := os.Getenv(key); value != "" {
+		var intVal int
+		if _, err := fmt.Sscanf(value, "%d", &intVal); err == nil {
+			return intVal
+		}
 	}
 	return defaultValue
 }

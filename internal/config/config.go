@@ -41,15 +41,15 @@ type BackendConfig struct {
 type Profile struct {
 	Name        string `yaml:"name"`
 	Region      string `yaml:"region"`
-	AWSProfile  string `yaml:"aws_profile"`  // AWS CLI profile name
+	AWSProfile  string `yaml:"aws_profile"` // AWS CLI profile name
 	Description string `yaml:"description"`
 }
 
 // TrainingConfig holds training preferences
 type TrainingConfig struct {
-	Enabled      bool   `yaml:"enabled"`
+	Enabled      bool     `yaml:"enabled"`
 	SkipModules  []string `yaml:"skip_modules"`
-	AutoComplete bool   `yaml:"auto_complete"`
+	AutoComplete bool     `yaml:"auto_complete"`
 }
 
 // DefaultConfig returns a new config with default values

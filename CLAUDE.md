@@ -5,6 +5,42 @@
 - No file creation unless explicitly requested.
 - Fix bugs silently unless cause is non-obvious.
 
+## Development Workflow
+
+### Planning Mode
+**Use plan mode for non-trivial features** - Enter plan mode when:
+- Feature spans multiple components or files
+- Multiple valid implementation approaches exist
+- Architectural decisions need to be made
+- User requirements need clarification
+
+**Plan mode process:**
+1. Use `EnterPlanMode` tool to explore codebase
+2. Launch Explore agents to understand existing patterns
+3. Launch Plan agent to design implementation
+4. Ask clarifying questions via `AskUserQuestion`
+5. Write detailed plan to plan file
+6. Use `ExitPlanMode` to get approval before implementing
+
+### Issue Documentation
+**Document plans as GitHub issues:**
+- Create issue for each major feature/fix before starting
+- Include clear scope, acceptance criteria, and tasks
+- Link related issues and PRs
+- Update issue with implementation notes as you work
+- Close with summary comment when complete
+
+**Create milestones for releases:**
+- Group related issues under version milestones (e.g., v0.1.0)
+- Track progress toward release goals
+- Use milestone due dates to guide priorities
+
+**Use labels consistently:**
+- `priority:critical`, `priority:high`, `priority:medium`, `priority:low`
+- `type:feature`, `type:bug`, `type:refactor`, `type:docs`, `type:test`
+- `component:cli`, `component:agent`, `component:backend`, `component:web`
+- Create custom labels as needed for project-specific categories
+
 ## Go Standards
 - Go 1.23+ with modules
 - `gofmt`, `goimports` on all code

@@ -107,6 +107,38 @@ func (s *Store) GetCredential(profile string) (*Credentials, error) {
 	return &creds, nil
 }
 
+// ListCredentials retrieves all stored credential profiles
+func (s *Store) ListCredentials() (map[string]*Credentials, error) {
+	profiles := make(map[string]*Credentials)
+
+	err := s.db.View(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(CredentialsBucket)
+		c := b.Cursor()
+
+		for k, v := c.First(); k != nil; k, v = c.Next() {
+			var creds Credentials
+			if err := json.Unmarshal(v, &creds); err != nil {
+				return fmt.Errorf("unmarshal credentials for %s: %w", k, err)
+			}
+			profiles[string(k)] = &creds
+		}
+		return nil
+	})
+
+	if err != nil {
+		return nil, err
+	}
+	return profiles, nil
+}
+
+// DeleteCredential removes AWS credentials for a profile
+func (s *Store) DeleteCredential(profile string) error {
+	return s.db.Update(func(tx *bbolt.Tx) error {
+		b := tx.Bucket(CredentialsBucket)
+		return b.Delete([]byte(profile))
+	})
+}
+
 // SetCache stores a cache entry with optional TTL
 func (s *Store) SetCache(key string, value interface{}, ttl time.Duration) error {
 	entry := CacheEntry{

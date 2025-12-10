@@ -10,7 +10,7 @@ services:
       POSTGRES_PASSWORD: ark_dev_password
       POSTGRES_DB: ark
     ports:
-      - "5432:5432"
+      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./scripts/init-db.sql:/docker-entrypoint-initdb.d/init.sql:ro
@@ -34,10 +34,16 @@ services:
     container_name: ark-backend
     environment:
       PORT: "8080"
-      DATABASE_URL: postgres://ark:ark_dev_password@postgres:5432/ark?sslmode=disable
+      DB_HOST: postgres
+      DB_PORT: "5432"
+      DB_USER: ark
+      DB_PASSWORD: ark_dev_password
+      DB_NAME: ark
+      DB_SSLMODE: disable
+      MIGRATIONS_PATH: /app/migrations
       LOG_LEVEL: info
     ports:
-      - "8080:8080"
+      - "8081:8080"
     depends_on:
       postgres:
         condition: service_healthy
