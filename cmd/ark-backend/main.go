@@ -14,7 +14,9 @@ import (
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
+	"github.com/scttfrdmn/ark/internal/audit"
 	"github.com/scttfrdmn/ark/internal/database"
+	"github.com/scttfrdmn/ark/internal/training"
 )
 
 var (
@@ -81,11 +83,17 @@ func main() {
 		)
 	}
 
+	// Initialize services
+	auditSvc := audit.NewService(db)
+	trainingSvc := training.NewService(db)
+
+	slog.Info("services initialized")
+
 	// Create server
 	addr := fmt.Sprintf("%s:%s", defaultHost, getEnv("PORT", defaultPort))
 	srv := &http.Server{
 		Addr:         addr,
-		Handler:      setupRouter(),
+		Handler:      setupRouter(auditSvc, trainingSvc),
 		ReadTimeout:  30 * time.Second,
 		WriteTimeout: 30 * time.Second,
 		IdleTimeout:  120 * time.Second,
@@ -125,7 +133,7 @@ func main() {
 	slog.Info("backend stopped")
 }
 
-func setupRouter() http.Handler {
+func setupRouter(auditSvc *audit.Service, trainingSvc *training.Service) http.Handler {
 	r := chi.NewRouter()
 
 	// Middleware stack
@@ -158,11 +166,23 @@ func setupRouter() http.Handler {
 			r.Get("/version", handleVersion)
 		})
 
+		// Audit endpoints
+		r.Route("/audit", func(r chi.Router) {
+			r.Post("/log", handleLogAudit(auditSvc))
+			r.Get("/logs", handleQueryAudit(auditSvc))
+		})
+
+		// Policy and training endpoints
+		r.Route("/policies", func(r chi.Router) {
+			r.Post("/check", handleCheckPolicy(trainingSvc))
+		})
+
+		r.Route("/training", func(r chi.Router) {
+			r.Get("/progress/{user_id}", handleGetUserProgress(trainingSvc))
+		})
+
 		// Future endpoints
 		// r.Route("/auth", func(r chi.Router) { ... })
-		// r.Route("/training", func(r chi.Router) { ... })
-		// r.Route("/policies", func(r chi.Router) { ... })
-		// r.Route("/audit", func(r chi.Router) { ... })
 	})
 
 	return r

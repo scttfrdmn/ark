@@ -11,9 +11,9 @@ import (
 // handleCreateBucket handles S3 bucket creation requests
 func (s *server) handleCreateBucket(w http.ResponseWriter, r *http.Request) {
 	var req struct {
-		BucketName        string `json:"bucket_name"`
-		Region            string `json:"region"`
-		Encryption        struct {
+		BucketName string `json:"bucket_name"`
+		Region     string `json:"region"`
+		Encryption struct {
 			Type     string `json:"type"`
 			KMSKeyID string `json:"kms_key_id,omitempty"`
 		} `json:"encryption"`
