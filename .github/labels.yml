@@ -1,0 +1,84 @@
+# Ark Project Labels
+# Sync with: gh label-sync sync --file .github/labels.yml
+
+labels:
+  # Priority Labels (4)
+  - name: "priority:critical"
+    color: "B60205"
+    description: "Critical priority - blocking issues"
+
+  - name: "priority:high"
+    color: "D93F0B"
+    description: "High priority"
+
+  - name: "priority:medium"
+    color: "FBCA04"
+    description: "Medium priority"
+
+  - name: "priority:low"
+    color: "0E8A16"
+    description: "Low priority"
+
+  # Type Labels (6)
+  - name: "type:bug"
+    color: "D73A4A"
+    description: "Something isn't working"
+
+  - name: "type:feature"
+    color: "0075CA"
+    description: "New feature or request"
+
+  - name: "type:refactor"
+    color: "CFD3D7"
+    description: "Code refactoring"
+
+  - name: "type:docs"
+    color: "0075CA"
+    description: "Documentation improvements"
+
+  - name: "type:test"
+    color: "BFD4F2"
+    description: "Testing improvements"
+
+  - name: "type:chore"
+    color: "FEF2C0"
+    description: "Maintenance tasks"
+
+  # Component Labels (5)
+  - name: "component:cli"
+    color: "5319E7"
+    description: "CLI interface"
+
+  - name: "component:web"
+    color: "1D76DB"
+    description: "Web interface"
+
+  - name: "component:agent"
+    color: "0E8A16"
+    description: "Local agent"
+
+  - name: "component:backend"
+    color: "D93F0B"
+    description: "Institutional backend"
+
+  - name: "component:training"
+    color: "FBCA04"
+    description: "Training content/modules"
+
+  # Status Labels (2)
+  - name: "status:blocked"
+    color: "E99695"
+    description: "Blocked by another issue"
+
+  - name: "status:needs-info"
+    color: "D876E3"
+    description: "Needs more information"
+
+  # Special Labels (2)
+  - name: "good-first-issue"
+    color: "7057FF"
+    description: "Good for newcomers"
+
+  - name: "help-wanted"
+    color: "008672"
+    description: "Extra attention needed"
