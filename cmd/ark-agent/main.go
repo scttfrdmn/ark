@@ -169,10 +169,10 @@ func (s *server) setupRouter() http.Handler {
 			r.Delete("/{profile}", s.handleDeleteCredentials)
 		})
 
-		// AWS operations (future)
-		// r.Route("/s3", func(r chi.Router) {
-		//     r.Post("/buckets", s.handleCreateBucket)
-		// })
+		// S3 operations
+		r.Route("/s3", func(r chi.Router) {
+			r.Post("/buckets", s.handleCreateBucket)
+		})
 
 		// Agent configuration endpoints (future)
 		// r.Route("/config", func(r chi.Router) {
