@@ -2,13 +2,18 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
+	"github.com/go-chi/cors"
 )
 
 var (
@@ -23,10 +28,20 @@ const (
 )
 
 func main() {
-	log.Printf("Starting Ark Backend v%s (commit: %s, built: %s)", version, commitSHA, buildDate)
+	// Setup structured logging
+	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelInfo,
+	}))
+	slog.SetDefault(logger)
+
+	slog.Info("starting ark backend",
+		"version", version,
+		"commit", commitSHA,
+		"buildDate", buildDate,
+	)
 
 	// Create server
-	addr := fmt.Sprintf("%s:%s", defaultHost, defaultPort)
+	addr := fmt.Sprintf("%s:%s", defaultHost, getEnv("PORT", defaultPort))
 	srv := &http.Server{
 		Addr:         addr,
 		Handler:      setupRouter(),
@@ -36,59 +51,133 @@ func main() {
 	}
 
 	// Start server in goroutine
+	serverErr := make(chan error, 1)
 	go func() {
-		log.Printf("Backend listening on http://%s", addr)
+		slog.Info("backend listening", "addr", addr)
 		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
-			log.Fatalf("Failed to start server: %v", err)
+			serverErr <- err
 		}
 	}()
 
-	// Wait for interrupt signal to gracefully shutdown
+	// Wait for interrupt signal or server error
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	<-quit
 
-	log.Println("Shutting down backend...")
+	select {
+	case err := <-serverErr:
+		slog.Error("server failed to start", "error", err)
+		os.Exit(1)
+	case sig := <-quit:
+		slog.Info("shutdown signal received", "signal", sig.String())
+	}
 
+	// Graceful shutdown
+	slog.Info("shutting down backend")
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	if err := srv.Shutdown(ctx); err != nil {
-		log.Printf("Backend shutdown error: %v", err)
+		slog.Error("shutdown error", "error", err)
 		os.Exit(1)
 	}
 
-	log.Println("Backend stopped")
+	slog.Info("backend stopped")
 }
 
 func setupRouter() http.Handler {
-	mux := http.NewServeMux()
+	r := chi.NewRouter()
 
-	// Health check endpoint
-	mux.HandleFunc("/health", handleHealth)
+	// Middleware stack
+	r.Use(middleware.RequestID)
+	r.Use(middleware.RealIP)
+	r.Use(loggerMiddleware)
+	r.Use(middleware.Recoverer)
+	r.Use(middleware.Heartbeat("/ping"))
 
-	// API version endpoint
-	mux.HandleFunc("/api/version", handleVersion)
+	// CORS configuration
+	r.Use(cors.Handler(cors.Options{
+		AllowedOrigins:   []string{"http://localhost:*", "http://127.0.0.1:*"},
+		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type"},
+		ExposedHeaders:   []string{"Link"},
+		AllowCredentials: true,
+		MaxAge:           300,
+	}))
 
-	// TODO: Add authentication middleware
-	// TODO: Add CORS middleware
-	// TODO: Add rate limiting
-	// TODO: Add training endpoints
-	// TODO: Add policy endpoints
-	// TODO: Add audit endpoints
+	// Health and system endpoints
+	r.Get("/health", handleHealth)
 
-	return mux
+	// API routes
+	r.Route("/api", func(r chi.Router) {
+		r.Get("/version", handleVersion)
+
+		// System endpoints
+		r.Route("/system", func(r chi.Router) {
+			r.Get("/health", handleHealth)
+			r.Get("/version", handleVersion)
+		})
+
+		// Future endpoints
+		// r.Route("/auth", func(r chi.Router) { ... })
+		// r.Route("/training", func(r chi.Router) { ... })
+		// r.Route("/policies", func(r chi.Router) { ... })
+		// r.Route("/audit", func(r chi.Router) { ... })
+	})
+
+	return r
+}
+
+// loggerMiddleware logs HTTP requests with structured logging
+func loggerMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		start := time.Now()
+
+		ww := middleware.NewWrapResponseWriter(w, r.ProtoMajor)
+		next.ServeHTTP(ww, r)
+
+		slog.Info("http request",
+			"method", r.Method,
+			"path", r.URL.Path,
+			"status", ww.Status(),
+			"bytes", ww.BytesWritten(),
+			"duration_ms", time.Since(start).Milliseconds(),
+			"request_id", middleware.GetReqID(r.Context()),
+			"remote_addr", r.RemoteAddr,
+		)
+	})
 }
 
 func handleHealth(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, `{"status":"healthy","version":"%s"}`, version)
+	resp := map[string]interface{}{
+		"status":  "healthy",
+		"version": version,
+		"time":    time.Now().UTC().Format(time.RFC3339),
+	}
+	writeJSON(w, http.StatusOK, resp)
 }
 
 func handleVersion(w http.ResponseWriter, r *http.Request) {
+	resp := map[string]string{
+		"version":   version,
+		"commit":    commitSHA,
+		"buildDate": buildDate,
+	}
+	writeJSON(w, http.StatusOK, resp)
+}
+
+// writeJSON writes a JSON response
+func writeJSON(w http.ResponseWriter, status int, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
-	fmt.Fprintf(w, `{"version":"%s","commit":"%s","buildDate":"%s"}`,
-		version, commitSHA, buildDate)
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(data); err != nil {
+		slog.Error("failed to encode json response", "error", err)
+	}
+}
+
+// getEnv gets an environment variable or returns a default value
+func getEnv(key, defaultValue string) string {
+	if value := os.Getenv(key); value != "" {
+		return value
+	}
+	return defaultValue
 }
