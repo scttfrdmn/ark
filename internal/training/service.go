@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/lib/pq"
 	"github.com/scttfrdmn/ark/internal/database"
 )
 
@@ -26,7 +27,7 @@ func (s *Service) CheckTrainingGate(ctx context.Context, userID string, action s
 		SELECT rules
 		FROM policies
 		WHERE policy_type = 'training_gate'
-		  AND rules->>'actions' @> $1
+		  AND rules->'actions' @> $1::jsonb
 		  AND status = 'active'
 	`
 
@@ -81,7 +82,7 @@ func (s *Service) CheckTrainingGate(ctx context.Context, userID string, action s
 		  AND utp.id IS NULL
 	`
 
-	incompleteRows, err := s.db.QueryContext(ctx, incompleteQuery, userID, moduleNames)
+	incompleteRows, err := s.db.QueryContext(ctx, incompleteQuery, userID, pq.Array(moduleNames))
 	if err != nil {
 		return nil, fmt.Errorf("query incomplete modules: %w", err)
 	}

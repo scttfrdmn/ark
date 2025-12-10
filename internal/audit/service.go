@@ -39,6 +39,16 @@ func (s *Service) Log(ctx context.Context, entry LogEntry) error {
 		userID = &entry.UserID
 	}
 
+	var ipAddress *string
+	if entry.IPAddress != "" {
+		ipAddress = &entry.IPAddress
+	}
+
+	var userAgent *string
+	if entry.UserAgent != "" {
+		userAgent = &entry.UserAgent
+	}
+
 	err = s.db.QueryRowContext(ctx, query,
 		userID,
 		entry.Action,
@@ -46,8 +56,8 @@ func (s *Service) Log(ctx context.Context, entry LogEntry) error {
 		entry.ResourceID,
 		entry.Status,
 		detailsJSON,
-		entry.IPAddress,
-		entry.UserAgent,
+		ipAddress,
+		userAgent,
 	).Scan(&entry.ID, &entry.CreatedAt)
 
 	if err != nil {
@@ -133,6 +143,8 @@ func (s *Service) Query(ctx context.Context, filters QueryFilters) ([]LogEntry, 
 	for rows.Next() {
 		var entry LogEntry
 		var userID sql.NullString
+		var ipAddress sql.NullString
+		var userAgent sql.NullString
 		var detailsJSON []byte
 
 		err := rows.Scan(
@@ -143,8 +155,8 @@ func (s *Service) Query(ctx context.Context, filters QueryFilters) ([]LogEntry, 
 			&entry.ResourceID,
 			&entry.Status,
 			&detailsJSON,
-			&entry.IPAddress,
-			&entry.UserAgent,
+			&ipAddress,
+			&userAgent,
 			&entry.CreatedAt,
 		)
 		if err != nil {
@@ -153,6 +165,12 @@ func (s *Service) Query(ctx context.Context, filters QueryFilters) ([]LogEntry, 
 
 		if userID.Valid {
 			entry.UserID = userID.String
+		}
+		if ipAddress.Valid {
+			entry.IPAddress = ipAddress.String
+		}
+		if userAgent.Valid {
+			entry.UserAgent = userAgent.String
 		}
 
 		// Unmarshal details
